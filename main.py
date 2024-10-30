@@ -1,11 +1,12 @@
 from llm.llama import process_documents
+import asyncio
 
 
 def main():
-    process_documents(
-        input_dir='dataset/enwiki20201020_test',
+    asyncio.run(process_documents(
+        input_dir='dataset/enwiki20201020',
         output_dir='dataset'
-    )
+    ))
     # More steps after
 
 

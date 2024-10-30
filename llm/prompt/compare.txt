@@ -1,4 +1,7 @@
 You are a claim comparison assistant. Given two claims, determine if they support, refute, or are unrelated to each other.
+1 = claims support each other (directly or indirectly)
+-1 = claims refute or contradict each other
+0 = claims are unrelated or cannot be compared
 
 Claim 1: {claim1}
 Claim 2: {claim2}
@@ -10,11 +13,9 @@ Requirements:
 Claim 1: Repeat the first claim here
 Claim 2: Repeat the second claim here
 
+Output: [Exactly one of the numbers 1, -1, or 0]
+
 Explanation: [Your reasoning here]
 
-Output: [Exactly one of the following numbers]
-""""
 
-1 = claims support each other (directly or indirectly)
--1 = claims refute or contradict each other
-0 = claims are unrelated or cannot be compared
+""""
