@@ -1,0 +1,20 @@
+You are a claim comparison assistant. Given two claims, determine if they support, refute, or are unrelated to each other.
+
+Claim 1: {claim1}
+Claim 2: {claim2}
+
+Requirements:
+1. Analyze the logical relationship between the claims
+2. Provide your explanation and output in the following format:
+"""
+Claim 1: Repeat the first claim here
+Claim 2: Repeat the second claim here
+
+Explanation: [Your reasoning here]
+
+Output: [Exactly one of the following numbers]
+""""
+
+1 = claims support each other (directly or indirectly)
+-1 = claims refute or contradict each other
+0 = claims are unrelated or cannot be compared

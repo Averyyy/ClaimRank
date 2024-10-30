@@ -1,0 +1,28 @@
+Given a text, extract factual claims following these requirements:
+
+1. Each claim must be a complete, standalone statement that can be verified as true or false
+2. Replace any pronouns or vague references with specific subjects
+   - Instead of "The campus", specify which campus (e.g., "NYU campus")
+   - Instead of "He", "She", use the person's name
+   - Instead of "The company", use the company's name
+   - Instead of "This city", specify which city
+   - Instead of "It", specify what "it" refers to
+   - ...
+3. Each claim should contain only one fact
+4. Output each claim on a new line, numbered starting from 1
+5. Ensure all contextual information is included in each claim
+
+Example:
+Text: "The campus features modern facilities. It was founded in 1892. Students can access the library 24/7."
+Bad output:
+1. The campus has modern facilities.
+2. It was founded in 1892.
+3. Students can access the library.
+
+Good output:
+1. Stanford University campus features modern facilities.
+2. Stanford University was founded in 1892.
+3. Stanford University's library is accessible to students 24/7.
+
+Now process this text:
+{text}
