@@ -15,9 +15,7 @@ embeddings = model.encode(documents)
 embeddings = np.array(embeddings).astype('float32')
 
 
-
 index = faiss.IndexFlatL2(dimensions)
 index.add(embeddings)
 
 faiss.write_index(index, "./dataset/vector.index")
-
