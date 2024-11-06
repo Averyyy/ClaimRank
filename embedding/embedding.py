@@ -3,8 +3,7 @@ import faiss
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-# df = pd.read_csv('./dataset/Filtered_Fake.csv')
-df = pd.read_csv('./dataset/Filtered_True.csv')
+df = pd.read_csv('./dataset/Filtered_data.csv', encoding='ISO-8859-1')
 
 documents = df['text'].tolist()
 
@@ -20,6 +19,5 @@ embeddings = np.array(embeddings).astype('float32')
 index = faiss.IndexFlatL2(dimensions)
 index.add(embeddings)
 
-# faiss.write_index(index, "./dataset/Fake.index")
-faiss.write_index(index, "./dataset/True.index")
+faiss.write_index(index, "./dataset/vector.index")
 
