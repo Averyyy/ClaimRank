@@ -1,0 +1,248 @@
+id1,id2,relation
+00000001,00010001,0,"Claim 1: Former FBI Director James Comey will testify before a U.S. Senate panel on June 8, 2017.
+Claim 2: The Trump administration's withdrawal from the Paris Agreement is a setback for the environment and U.S. leadership in the world. (This claim is supported by statements from business leaders like Lloyd Blankfein.)
+
+Output: 0
+Explanation: These claims are unrelated. One focuses on a specific event (Comey's testimony) while the other discusses a policy decision (withdrawal from the Paris Agreement). There is no direct or indirect connection between them based on factual content.  
+
+
+"
+00000001,00010002,0,"Claim 1: Former FBI Director James Comey will testify before a U.S. Senate panel on June 8, 2017.
+Claim 2: Rich and poor countries committed to reducing greenhouse gas emissions under the Paris Agreement.
+
+Output: 0
+
+Explanation: These claims are unrelated. The first claim focuses on a specific event involving James Comey's testimony before a senate panel, while the second claim discusses an international agreement regarding climate change mitigation. There is no direct or indirect factual connection between the two statements. 
+
+
+"
+00000001,00010003,0,"Claim 1: Former FBI Director James Comey will testify before a U.S. Senate panel on June 8, 2017.
+Claim 2: The U.S. decision to withdraw from the Paris Agreement will undermine international responsibility and efforts to respond to climate change. (This claim is made by South Korea's foreign ministry.)
+
+Output: 0
+
+Explanation: These claims are unrelated. One focuses on a specific event (Comey's testimony) within the US political sphere, while the other expresses an opinion about US policy regarding the Paris Agreement and its global impact. There is no direct or indirect factual connection between them. 
+
+
+"
+00000001,00010004,0,"Claim 1: Former FBI Director James Comey will testify before a U.S. Senate panel on June 8, 2017.
+Claim 2: Climate change is real, and industry must now lead in addressing it. (This claim is made by General Electric CEO Jeff Immelt.)
+
+Output: 0
+
+Explanation: These claims are unrelated. The first claim focuses on a specific event - Comey's testimony - while the second is a statement about climate change and corporate responsibility. There is no direct or indirect factual connection between them. 
+
+
+"
+00000001,00010005,0,"Claim 1: Former FBI Director James Comey will testify before a U.S. Senate panel on June 8, 2017.
+Claim 2: The U.S. withdrawal from the Paris Agreement will potentially cost U.S. jobs.
+
+Output: 0
+Explanation: These claims are unrelated.  The first claim focuses on a scheduled testimony about potentially sensitive matters related to the FBI and national security. The second claim deals with the economic consequences of a specific foreign policy decision (withdrawal from the Paris Agreement). There is no clear factual connection between the two events. 
+
+
+"
+00000001,00010006,0,"Claim 1: Former FBI Director James Comey will testify before a U.S. Senate panel on June 8, 2017.
+Claim 2: The U.S. will be left behind in the clean energy transition as other global players demonstrate greater commitment to deploying low carbon solutions.
+
+Output: 0
+
+Explanation: These claims are unrelated. The first claim is about a specific event (Comey's testimony) while the second is a statement about the US position in the global clean energy market. There is no factual connection between the two. 
+
+
+"
+00000002,00010001,0,"Claim 1: President Donald Trump fired James Comey on May 9, 2017.
+Claim 2: The Trump administration's withdrawal from the Paris Agreement is a setback for the environment and U.S. leadership in the world. (This claim is supported by statements from business leaders like Lloyd Blankfein.)
+
+Output: 0
+Explanation: These claims address distinct events and policies within the Trump presidency.  Firing Comey relates to internal administration matters, while the Paris Agreement withdrawal is a foreign policy decision. There's no direct or indirect factual link between them. 
+
+
+"
+00000002,00010002,0,"Claim 1: President Donald Trump fired James Comey on May 9, 2017.
+Claim 2: Rich and poor countries committed to reducing greenhouse gas emissions under the Paris Agreement. 
+
+Output: 0
+
+Explanation: These claims are unrelated. The first pertains to a specific political event (Trump firing Comey), while the second discusses an international environmental agreement (the Paris Agreement). There is no direct or indirect connection between the two.  
+"
+00000002,00010003,0,"Claim 1: President Donald Trump fired James Comey on May 9, 2017.
+Claim 2: The U.S. decision to withdraw from the Paris Agreement will undermine international responsibility and efforts to respond to climate change. (This claim is made by South Korea's foreign ministry.)
+
+Output: 0
+
+Explanation: These claims are unrelated. The first claim focuses on a specific event - the firing of James Comey - while the second expresses an opinion about US policy regarding the Paris Agreement. There is no direct or indirect factual connection between these two statements. 
+
+
+"
+00000002,00010004,0,"Claim 1: President Donald Trump fired James Comey on May 9, 2017.
+Claim 2: Climate change is real, and industry must now lead in addressing it. (This claim is made by General Electric CEO Jeff Immelt.)
+
+Output: 0
+Explanation: These claims are factually unrelated. One describes a political event (Comey's firing), while the other expresses an opinion on environmental policy. There is no direct or indirect connection between them.  
+
+
+"
+00000002,00010005,0,"Claim 1: President Donald Trump fired James Comey on May 9, 2017.
+Claim 2: The U.S. withdrawal from the Paris Agreement will potentially cost U.S. jobs.
+
+Output: 0
+
+Explanation: These claims are about distinct events with no apparent connection.  Firing James Comey relates to internal government actions and potential investigations, while the Paris Agreement withdrawal focuses on international environmental policy and its economic impacts. There's no direct or indirect link presented between these two situations. 
+
+
+"
+00000002,00010006,0,"Claim 1: President Donald Trump fired James Comey on May 9, 2017.
+Claim 2: The U.S. will be left behind in the clean energy transition as other global players demonstrate greater commitment to deploying low carbon solutions.
+
+Output: 0
+
+Explanation: These claims are unrelated. The first claim is a historical event about the firing of FBI Director James Comey, while the second claim discusses the future of US competitiveness in the clean energy sector. There is no direct or indirect factual connection between these two statements. 
+
+
+"
+00000003,00010001,0,"Claim 1: Robert Mueller became special counsel to investigate Russia's actions in the 2016 presidential election in May 2017.
+Claim 2: The Trump administration's withdrawal from the Paris Agreement is a setback for the environment and U.S. leadership in the world. (This claim is supported by statements from business leaders like Lloyd Blankfein.)
+
+Output: 0
+Explanation: These claims address distinct issues. Claim 1 focuses on the investigation into Russian interference in the 2016 election, while Claim 2 concerns the Trump administration's policy regarding the Paris Agreement on climate change. There is no clear factual connection or logical relationship between the two. 
+
+
+"
+00000003,00010002,0,"Claim 1: Robert Mueller became special counsel to investigate Russia's actions in the 2016 presidential election in May 2017.
+Claim 2: Rich and poor countries committed to reducing greenhouse gas emissions under the Paris Agreement.
+
+Output: 0
+Explanation: These claims are about completely unrelated events. The first pertains to a political investigation, while the second concerns an international environmental agreement.  There is no factual connection between them. 
+
+
+"
+00000003,00010003,0,"Claim 1: Robert Mueller became special counsel to investigate Russia's actions in the 2016 presidential election in May 2017.
+Claim 2: The U.S. decision to withdraw from the Paris Agreement will undermine international responsibility and efforts to respond to climate change. (This claim is made by South Korea's foreign ministry.)
+
+Output: 0
+
+Explanation: These claims are unrelated. The first claim focuses on the appointment of a special counsel to investigate Russian interference in the 2016 election, while the second claim addresses the U.S. withdrawal from the Paris Agreement and its implications for climate change. There is no direct or indirect factual connection between these two events.  
+"
+00000003,00010004,0,"Claim 1: Robert Mueller became special counsel to investigate Russia's actions in the 2016 presidential election in May 2017.
+Claim 2: Climate change is real, and industry must now lead in addressing it. (This claim is made by General Electric CEO Jeff Immelt.)
+
+Output: 0
+Explanation: These claims are about entirely different topics. The first claim relates to a political investigation, while the second pertains to environmental policy and corporate responsibility. There is no direct or indirect relationship between them.  
+
+
+"
+00000003,00010005,0,"Claim 1: Robert Mueller became special counsel to investigate Russia's actions in the 2016 presidential election in May 2017.
+Claim 2: The U.S. withdrawal from the Paris Agreement will potentially cost U.S. jobs.
+
+Output: 0
+Explanation: These claims are unrelated. The first claim focuses on the appointment of a special counsel to investigate Russian interference in the 2016 election, while the second claim discusses the potential economic consequences of withdrawing from the Paris Agreement on climate change. There is no direct or indirect factual connection between the two events.  
+"
+00000003,00010006,0,"Claim 1: Robert Mueller became special counsel to investigate Russia's actions in the 2016 presidential election in May 2017.
+Claim 2: The U.S. will be left behind in the clean energy transition as other global players demonstrate greater commitment to deploying low carbon solutions.
+
+Output: 0
+Explanation: These claims are unrelated. The first claim focuses on a specific political investigation, while the second discusses a future trend in the global energy market. There is no logical connection between the two.  
+
+
+"
+00000004,00010001,0,"Claim 1: The Senate Intelligence Committee will hold an open and closed session with James Comey on June 8, 2017.
+Claim 2: The Trump administration's withdrawal from the Paris Agreement is a setback for the environment and U.S. leadership in the world. (This claim is supported by statements from business leaders like Lloyd Blankfein.)
+
+Output: 0
+Explanation: These claims are about entirely different events. Claim 1 focuses on a congressional hearing with James Comey, while Claim 2 discusses the Trump administration's decision regarding the Paris Agreement. There is no direct or indirect factual connection between them.  
+
+
+
+
+"
+00000004,00010002,0,"Claim 1: The Senate Intelligence Committee will hold an open and closed session with James Comey on June 8, 2017.
+Claim 2: Rich and poor countries committed to reducing greenhouse gas emissions under the Paris Agreement.
+
+Output: 0
+
+Explanation: These claims address entirely separate topics. Claim 1 concerns a congressional hearing regarding James Comey, while Claim 2 discusses international agreements on climate change. There is no factual connection between these events. 
+
+
+"
+00000004,00010003,0,"Claim 1: The Senate Intelligence Committee will hold an open and closed session with James Comey on June 8, 2017.
+Claim 2: The U.S. decision to withdraw from the Paris Agreement will undermine international responsibility and efforts to respond to climate change. (This claim is made by South Korea's foreign ministry.)
+
+Output: 0
+Explanation: These claims address completely separate issues. The first claim focuses on a scheduled congressional hearing, while the second expresses an opinion about U.S. foreign policy regarding climate change. There is no direct or indirect factual connection between them.  
+
+
+"
+00000004,00010004,0,"Claim 1: The Senate Intelligence Committee will hold an open and closed session with James Comey on June 8, 2017.
+Claim 2: Climate change is real, and industry must now lead in addressing it. (This claim is made by General Electric CEO Jeff Immelt.)
+
+Output: 0
+Explanation: These claims are entirely unrelated. The first claim discusses a congressional hearing with James Comey, while the second expresses an opinion on climate change and corporate responsibility.  There's no factual connection between them. 
+
+
+"
+00000004,00010005,0,"Claim 1: The Senate Intelligence Committee will hold an open and closed session with James Comey on June 8, 2017.
+Claim 2: **The U.S. withdrawal from the Paris Agreement will potentially cost U.S. jobs.**
+
+Output: 0
+Explanation: These claims are unrelated.  The first claim concerns a specific congressional hearing about James Comey. The second claim discusses the economic impact of a different policy decision - the U.S. withdrawal from the Paris Agreement. There is no direct or indirect factual link between these two events. 
+
+
+"
+00000004,00010006,0,"Claim 1: The Senate Intelligence Committee will hold an open and closed session with James Comey on June 8, 2017.
+Claim 2: The U.S. will be left behind in the clean energy transition as other global players demonstrate greater commitment to deploying low carbon solutions.
+
+Output: 0
+Explanation: These claims are unrelated. The first claim focuses on a specific congressional hearing with James Comey, while the second discusses the U.S.'s position in the global clean energy market. There is no direct or indirect factual connection between them. 
+
+
+"
+00000005,00010001,0,"Claim 1: Devin Nunes approved subpoenas for information relating to the ""unmasking"" of Trump campaign advisers from the CIA, FBI, and National Security Agency in June 2017.
+Claim 2: The Trump administration's withdrawal from the Paris Agreement is a setback for the environment and U.S. leadership in the world. (This claim is supported by statements from business leaders like Lloyd Blankfein.)
+
+Output: 0
+Explanation:  The claims address distinct events and issues. Claim 1 focuses on congressional investigations into alleged surveillance of Trump campaign associates, while Claim 2 pertains to the Trump administration's foreign policy decision regarding climate change. There is no direct or indirect factual connection between these two claims. 
+
+
+"
+00000005,00010002,0,"Claim 1: Devin Nunes approved subpoenas for information relating to the ""unmasking"" of Trump campaign advisers from the CIA, FBI, and National Security Agency in June 2017.
+Claim 2: Rich and poor countries committed to reducing greenhouse gas emissions under the Paris Agreement.
+
+Output: 0
+
+Explanation: These claims address entirely separate topics. The first claim focuses on a political investigation related to the Trump campaign, while the second refers to an international environmental agreement. There is no direct or indirect factual connection between them. 
+
+
+"
+00000005,00010003,0,"Claim 1: Devin Nunes approved subpoenas for information relating to the ""unmasking"" of Trump campaign advisers from the CIA, FBI, and National Security Agency in June 2017.
+Claim 2: The U.S. decision to withdraw from the Paris Agreement will undermine international responsibility and efforts to respond to climate change. (This claim is made by South Korea's foreign ministry.)
+
+Output: 0
+
+Explanation: These claims address entirely different topics. Claim 1 focuses on investigations into alleged surveillance of Trump campaign associates, while Claim 2 expresses concern about the U.S. withdrawal from the Paris Agreement on climate change. There is no direct or indirect factual connection between the two claims. 
+
+
+"
+00000005,00010004,0,"Claim 1: Devin Nunes approved subpoenas for information relating to the ""unmasking"" of Trump campaign advisers from the CIA, FBI, and National Security Agency in June 2017.
+Claim 2: Climate change is real, and industry must now lead in addressing it. (This claim is made by General Electric CEO Jeff Immelt.)
+
+Output: 0
+Explanation: These claims are entirely unrelated. The first claim focuses on a specific political investigation regarding Trump campaign associates, while the second claim addresses the issue of climate change and corporate responsibility. There is no logical connection or factual overlap between the two.  
+
+
+"
+00000005,00010005,0,"Claim 1: Devin Nunes approved subpoenas for information relating to the ""unmasking"" of Trump campaign advisers from the CIA, FBI, and National Security Agency in June 2017.
+Claim 2: The U.S. withdrawal from the Paris Agreement will potentially cost U.S. jobs.
+
+Output: 0
+Explanation: These claims address entirely separate issues. Claim 1 focuses on investigations into alleged surveillance of the Trump campaign, while Claim 2 concerns the economic consequences of withdrawing from the Paris climate agreement. There is no direct or indirect factual connection between the two. 
+
+
+"
+00000005,00010006,0,"Claim 1: Devin Nunes approved subpoenas for information relating to the ""unmasking"" of Trump campaign advisers from the CIA, FBI, and National Security Agency in June 2017.
+Claim 2: The U.S. will be left behind in the clean energy transition as other global players demonstrate greater commitment to deploying low carbon solutions.
+
+Output: 0
+
+Explanation: These claims are unrelated. The first claim focuses on a specific political event concerning investigations into Trump campaign activities, while the second claim discusses the US's position within the global clean energy landscape. There is no direct or indirect factual connection between the two statements.  
+"

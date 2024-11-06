@@ -11,8 +11,9 @@ from typing import List, Tuple, Dict
 # =================== Hyperparameters ====================
 
 # Paths to input files
-FILTERED_CSV_PATH = 'dataset/filtered.csv'
-SIMILARITY_CSV_PATH = 'dataset/similarity.csv'
+FILTERED_CSV_PATH = 'dataset/filter.csv'
+SIMILARITY_CSV_PATH = 'dataset/similarity_results.csv'
+FILE_ENCODING = 'ISO-8859-1'
 
 # Output directory
 OUTPUT_DIR = 'dataset'
@@ -22,7 +23,7 @@ OLLAMA_BASE_URL = 'http://localhost:11434'
 MODEL_NAME = 'gemma2'
 
 # Similarity threshold for comparing documents
-SIMILARITY_THRESHOLD = 0.02  # Adjust as needed
+SIMILARITY_THRESHOLD = 0.004  # Adjust as needed
 
 # Async settings
 BATCH_SIZE = 10  # Number of tasks to run concurrently
@@ -52,9 +53,9 @@ class OllamaClient:
         self.logger = logging.getLogger(__name__)
 
         # Load prompts
-        with open('llm/prompt/extract.txt', 'r', encoding='utf-8') as f:
+        with open('llm/prompt/extract.txt', 'r', encoding=FILE_ENCODING) as f:
             self.extract_prompt = f.read()
-        with open('llm/prompt/compare.txt', 'r', encoding='utf-8') as f:
+        with open('llm/prompt/compare.txt', 'r', encoding=FILE_ENCODING) as f:
             self.compare_prompt = f.read()
 
     async def generate(self, session, prompt, stream=False, max_retries=MAX_RETRIES):
@@ -139,9 +140,9 @@ async def process_documents():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     # Create empty relations file immediately
-    with open(relations_file, 'w', newline='', encoding='utf-8') as f:
+    with open(relations_file, 'w', newline='', encoding=FILE_ENCODING) as f:
         writer = csv.writer(f)
-        writer.writerow(['id1', 'id2', 'relation'])
+        writer.writerow(['id1', 'id2', 'relation', 'response'])
 
     # Check for existing claims file
     existing_claims_files = [f for f in os.listdir(OUTPUT_DIR) if f.startswith('claims_') and f.endswith('.csv')]
@@ -151,7 +152,7 @@ async def process_documents():
         latest_claims_file = max(existing_claims_files)
         client.logger.info(f"Found existing claims file: {latest_claims_file}")
 
-        with open(os.path.join(OUTPUT_DIR, latest_claims_file), 'r', encoding='utf-8') as f:
+        with open(os.path.join(OUTPUT_DIR, latest_claims_file), 'r', encoding=FILE_ENCODING) as f:
             reader = csv.reader(f)
             next(reader)  # Skip header
             claims_data = [tuple(row) for row in reader]
@@ -161,7 +162,7 @@ async def process_documents():
         # Load documents from filtered.csv
         client.logger.info(f"Loading documents from {FILTERED_CSV_PATH}")
         documents = []
-        with open(FILTERED_CSV_PATH, 'r', encoding='utf-8') as f:
+        with open(FILTERED_CSV_PATH, 'r', encoding=FILE_ENCODING) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 documents.append({
@@ -190,7 +191,7 @@ async def process_documents():
                 claims_data.extend(claims)
 
             # Save extracted claims
-            with open(claims_file, 'w', newline='', encoding='utf-8') as f:
+            with open(claims_file, 'w', newline='', encoding=FILE_ENCODING) as f:
                 writer = csv.writer(f)
                 writer.writerow(['claim_id', 'claim', 'document_id'])
                 writer.writerows(claims_data)
@@ -199,7 +200,7 @@ async def process_documents():
     # Load similarity data
     client.logger.info(f"Loading similarity data from {SIMILARITY_CSV_PATH}")
     similarity_pairs = []
-    with open(SIMILARITY_CSV_PATH, 'r', encoding='utf-8') as f:
+    with open(SIMILARITY_CSV_PATH, 'r', encoding=FILE_ENCODING) as f:
         reader = csv.DictReader(f)
         for row in reader:
             similarity = float(row['similarity'])
@@ -239,10 +240,10 @@ async def process_documents():
                     if len(comparison_tasks) >= BATCH_SIZE:
                         results = await asyncio.gather(*comparison_tasks)
                         for res in results:
-                            if res[2] != 0:  # Only store non-zero relations
+                            # if res[2] != 0:  # Only store non-zero relations
                                 relations_data.append(res)
                         # Save intermediate relations
-                        with open(relations_file, 'a', newline='', encoding='utf-8') as f:
+                        with open(relations_file, 'a', newline='', encoding=FILE_ENCODING) as f:
                             writer = csv.writer(f)
                             writer.writerows(relations_data)
                         relations_data.clear()
@@ -255,10 +256,10 @@ async def process_documents():
         if comparison_tasks:
             results = await asyncio.gather(*comparison_tasks)
             for res in results:
-                if res[2] != 0:
+                # if res[2] != 0:
                     relations_data.append(res)
             # Save final relations
-            with open(relations_file, 'a', newline='', encoding='utf-8') as f:
+            with open(relations_file, 'a', newline='', encoding=FILE_ENCODING) as f:
                 writer = csv.writer(f)
                 writer.writerows(relations_data)
 
