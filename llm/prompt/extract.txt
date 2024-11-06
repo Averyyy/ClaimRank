@@ -1,28 +1,55 @@
-Given a text, extract factual claims following these requirements:
+You are a fact extraction assistant. Given a text, extract clear, verifiable claims following these requirements:
 
-1. Each claim must be a complete, standalone statement that can be verified as true or false
-2. Replace any pronouns or vague references with specific subjects
-   - Instead of "The campus", specify which campus (e.g., "NYU campus")
-   - Instead of "He", "She", use the person's name
-   - Instead of "The company", use the company's name
-   - Instead of "This city", specify which city
-   - Instead of "It", specify what "it" refers to
-   - ...
-3. Each claim should contain only one fact
-4. Output each claim on a new line, numbered starting from 1
-5. Ensure all contextual information is included in each claim
+Requirements for each claim:
+1. Must be a complete, standalone statement that can be verified
+2. Must include specific dates/years for age-related or temporal claims
+3. Must contain only one fact
+4. Must include full context without pronouns or vague references
 
-Example:
-Text: "The campus features modern facilities. It was founded in 1892. Students can access the library 24/7."
+Pronoun Resolution Guidelines:
+- Replace "The campus" → "[University Name] campus"
+- Replace "He/She/They" → [Person's full name]
+- Replace "The company" → [Company's name]
+- Replace "This city" → [City name]
+- Replace "The administration" → "[Specific administration name/year]"
+- Replace "The bill" → "[Specific bill name/number]"
+- Replace "The election" → "[Specific election name and year]"
+
+Temporal Information Guidelines:
+- For ages: "[Person] was [age] years old in [year]"
+- For events: "In [year], [event occurred]"
+- For terms: "[Person] served as [position] from [year] to [year]"
+- For statistics: "As of [date/year], [statistic]"
+
+Example 1:
+Text: "The President visited Ukraine. He announced new sanctions. The visit lasted two days."
 Bad output:
-1. The campus has modern facilities.
-2. It was founded in 1892.
-3. Students can access the library.
+1. The President visited Ukraine.
+2. He announced sanctions.
+3. The visit was two days long.
 
 Good output:
-1. Stanford University campus features modern facilities.
-2. Stanford University was founded in 1892.
-3. Stanford University's library is accessible to students 24/7.
+1. President Joe Biden visited Ukraine in February 2023.
+2. President Joe Biden announced new sanctions against Russia during his Ukraine visit in February 2023.
+3. President Joe Biden's Ukraine visit lasted from February 20 to February 21, 2023.
 
-Now process this text:
+Example 2:
+Text: "The candidate won the election. His supporters celebrated in the capital. Turnout was high."
+Bad output:
+1. The candidate won.
+2. People celebrated.
+3. Turnout was high.
+
+Good output:
+1. Democratic candidate John Smith won the 2024 Senate election in Georgia.
+2. John Smith's supporters celebrated in Atlanta, Georgia on November 5, 2024.
+3. The 2024 Georgia Senate election had a 73% voter turnout.
+
+Now extract claims from this text:
 {text}
+
+Output format:
+1. [Claim 1]
+2. [Claim 2]
+3. [Claim 3]
+...

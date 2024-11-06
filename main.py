@@ -4,8 +4,6 @@ import asyncio
 
 def main():
     asyncio.run(process_documents(
-        input_dir='dataset/enwiki20201020',
-        output_dir='dataset'
     ))
     # More steps after
 

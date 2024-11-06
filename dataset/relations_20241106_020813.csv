@@ -1,0 +1,9 @@
+id1,id2,relation,response
+00000001,00010001,0,"Claim 1: Barron Trump is an 11-year-old boy.
+Claim 2: James Comey will testify next Thursday before a U.S. Senate panel investigating Russia's alleged meddling in the 2016 U.S. election.
+
+Output: 0
+Explanation: These claims are completely unrelated. One is a factual statement about Barron Trump's age, while the other describes a political event involving James Comey and a Senate investigation.  There is no logical connection between them. 
+
+
+"

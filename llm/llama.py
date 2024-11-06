@@ -1,47 +1,73 @@
 # llama.py
 import os
-import json
 import csv
 import time
 import logging
-from typing import List, Tuple
 import asyncio
 import aiohttp
 from datetime import datetime
+from typing import List, Tuple, Dict
 
+# =================== Hyperparameters ====================
+
+# Paths to input files
+FILTERED_CSV_PATH = 'dataset/filtered.csv'
+SIMILARITY_CSV_PATH = 'dataset/similarity.csv'
+
+# Output directory
+OUTPUT_DIR = 'dataset'
+
+# Ollama API settings
+OLLAMA_BASE_URL = 'http://localhost:11434'
+MODEL_NAME = 'gemma2'
+
+# Similarity threshold for comparing documents
+SIMILARITY_THRESHOLD = 0.02  # Adjust as needed
+
+# Async settings
+BATCH_SIZE = 10  # Number of tasks to run concurrently
+
+# Retry settings
+MAX_RETRIES = 3
+
+# Logging settings
+LOGGING_LEVEL = logging.INFO
+LOG_FILE = 'processing.log'
+
+# ========================================================
 
 class OllamaClient:
-    def __init__(self, base_url="http://localhost:11434"):
-        self.base_url = base_url
+    def __init__(self):
+        self.base_url = OLLAMA_BASE_URL
 
         # Set up logging
         logging.basicConfig(
-            level=logging.INFO,
+            level=LOGGING_LEVEL,
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler('processing.log'),
+                logging.FileHandler(LOG_FILE),
                 logging.StreamHandler()
             ]
         )
         self.logger = logging.getLogger(__name__)
 
         # Load prompts
-        with open('llm/prompt/extract.txt', 'r') as f:
+        with open('llm/prompt/extract.txt', 'r', encoding='utf-8') as f:
             self.extract_prompt = f.read()
-        with open('llm/prompt/compare.txt', 'r') as f:
+        with open('llm/prompt/compare.txt', 'r', encoding='utf-8') as f:
             self.compare_prompt = f.read()
 
-    async def generate(self, session, prompt, model="llama3.2", stream=False, max_retries=3):
+    async def generate(self, session, prompt, stream=False, max_retries=MAX_RETRIES):
         """Asynchronous generate function with retry mechanism."""
         for attempt in range(max_retries):
             try:
                 url = f"{self.base_url}/api/generate"
                 payload = {
-                    "model": model,
+                    "model": MODEL_NAME,
                     "prompt": prompt,
                     "stream": stream
                 }
-                async with session.post(url, json=payload, timeout=60) as response:
+                async with session.post(url, json=payload, timeout=120) as response:
                     response.raise_for_status()
                     result = await response.json()
                     return result
@@ -49,6 +75,7 @@ class OllamaClient:
                 # self.logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
                 if attempt == max_retries - 1:
                     raise
+                await asyncio.sleep(2 ** attempt)  # Exponential backoff
                 await asyncio.sleep(2 ** attempt)  # Exponential backoff
 
     async def extract_claims(self, session, doc_id: str, text: str) -> List[Tuple[str, str, str]]:
@@ -63,7 +90,7 @@ class OllamaClient:
                     if len(parts) == 2:
                         claim = parts[1].strip()
                         if len(claim) > 10:  # Basic validation
-                            claim_id = f"{doc_id.zfill(8)}{str(len(claims)+1).zfill(8)}"
+                            claim_id = f"{doc_id.zfill(4)}{str(len(claims)+1).zfill(4)}"
                             claims.append((claim_id, claim, doc_id))
             if not claims:
                 self.logger.warning(f"No valid claims extracted from document {doc_id}")
@@ -72,84 +99,90 @@ class OllamaClient:
             self.logger.error(f"Failed to extract claims from document {doc_id}: {str(e)}")
             return []
 
-    async def compare_claims(self, session, claim1_data: Tuple[str, str, str],
-                             claim2_data: Tuple[str, str, str]) -> Tuple[str, str, int]:
-        """Compare two claims asynchronously."""
+    async def compare_claims(self, session, claim1_data: Tuple[str, str, str], claim2_data: Tuple[str, str, str]) -> Tuple[str, str, int, str]:
+        """Compare two claims with improved error handling and response parsing."""
         claim1_id, claim1_text, _ = claim1_data
         claim2_id, claim2_text, _ = claim2_data
+        
         try:
             prompt = self.compare_prompt.format(claim1=claim1_text, claim2=claim2_text)
             response = await self.generate(session, prompt)
             result = response['response']
 
-            # Extract number from "Output: " section
-            output_lines = [line.strip() for line in result.split('\n') if line.strip().startswith('Output:')]
-            if not output_lines:
-                raise ValueError("No Output section found")
-
-            output_line = output_lines[0]
-            result_number = output_line.replace('Output:', '').strip()
-            result_number = ''.join(filter(lambda x: x in '-0123456789', result_number))
-
-            if result_number in ['1', '-1', '0']:
-                return claim1_id, claim2_id, int(result_number)
+            # Simpler parsing: just look for last number in the response
+            numbers = [n for n in result.split() if n in ['1', '-1', '0']]
+            if numbers:
+                relation = int(numbers[-1])
+                return claim1_id, claim2_id, relation, result
             else:
-                raise ValueError(f"Invalid comparison result: {result_number}")
+                raise ValueError("No valid relation found in response")
+
         except Exception as e:
             self.logger.error(f"Failed to compare claims {claim1_id} and {claim2_id}: {str(e)}")
-            return claim1_id, claim2_id, 0
+            return claim1_id, claim2_id, 0, str(e)
 
 
-async def process_documents(input_dir: str, output_dir: str):
+async def process_documents():
     client = OllamaClient()
     claims_data = []
     relations_data = []
 
     # Create timestamp for this run
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Define output files
+    claims_file = os.path.join(OUTPUT_DIR, f'claims_{timestamp}.csv')
+    relations_file = os.path.join(OUTPUT_DIR, f'relations_{timestamp}.csv')
+
+    # Ensure output directory exists
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    # Create empty relations file immediately
+    with open(relations_file, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['id1', 'id2', 'relation', 'response'])
 
     # Check for existing claims file
-    existing_claims_files = [f for f in os.listdir(output_dir) if f.startswith('claims_') and f.endswith('.csv')]
+    existing_claims_files = [f for f in os.listdir(OUTPUT_DIR) if f.startswith('claims_') and f.endswith('.csv')]
 
     if existing_claims_files:
         # Use the most recent claims file
         latest_claims_file = max(existing_claims_files)
         client.logger.info(f"Found existing claims file: {latest_claims_file}")
 
-        with open(os.path.join(output_dir, latest_claims_file), 'r', encoding='utf-8') as f:
+        with open(os.path.join(OUTPUT_DIR, latest_claims_file), 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
             next(reader)  # Skip header
+            claims_data = [tuple(row) for row in reader]
             claims_data = [tuple(row) for row in reader]
 
         client.logger.info(f"Loaded {len(claims_data)} existing claims")
     else:
-        # Process each JSON file to extract claims asynchronously
-        total_files = len([f for f in os.listdir(input_dir) if f.endswith('.json')])
-        file_count = 0
+        # Load documents from filtered.csv
+        client.logger.info(f"Loading documents from {FILTERED_CSV_PATH}")
+        documents = []
+        with open(FILTERED_CSV_PATH, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                documents.append({
+                    'id': row['id'],
+                    'title': row['title'],
+                    'text': row['text'],
+                    'validity': row['validity']
+                })
+
+        # Extract claims asynchronously
+        client.logger.info(f"Extracting claims from {len(documents)} documents")
 
         async with aiohttp.ClientSession() as session:
             tasks = []
-            for filename in os.listdir(input_dir):
-                if not filename.endswith('.json'):
-                    continue
-
-                file_count += 1
-                client.logger.info(f"Processing file {file_count}/{total_files}: {filename}")
-
-                try:
-                    with open(os.path.join(input_dir, filename), 'r', encoding='utf-8') as f:
-                        documents = json.load(f)
-
-                    for doc in documents:
-                        doc_id = str(doc['id'])
-                        text = doc['text']
-                        task = asyncio.create_task(
-                            client.extract_claims(session, doc_id, text)
-                        )
-                        tasks.append(task)
-                except Exception as e:
-                    client.logger.error(f"Error processing file {filename}: {str(e)}")
-                    continue
+            for doc in documents:
+                doc_id = doc['id']
+                text = doc['text']
+                task = asyncio.create_task(
+                    client.extract_claims(session, doc_id, text)
+                )
+                tasks.append(task)
 
             # Gather all claim extraction tasks
             results = await asyncio.gather(*tasks)
@@ -157,79 +190,82 @@ async def process_documents(input_dir: str, output_dir: str):
                 claims_data.extend(claims)
 
             # Save extracted claims
-            claims_file = os.path.join(output_dir, f'claims_{timestamp}.csv')
             with open(claims_file, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 writer.writerow(['claim_id', 'claim', 'document_id'])
                 writer.writerows(claims_data)
             client.logger.info(f"Claim extraction complete. Total claims extracted: {len(claims_data)}")
 
-    # Compare claims asynchronously
-    client.logger.info("Starting claim comparisons...")
-    total_claims = len(claims_data)
+    # Load similarity data
+    client.logger.info(f"Loading similarity data from {SIMILARITY_CSV_PATH}")
+    similarity_pairs = []
+    with open(SIMILARITY_CSV_PATH, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            similarity = float(row['similarity'])
+            if similarity >= SIMILARITY_THRESHOLD:
+                similarity_pairs.append((row['id1'], row['id2']))
+
+    client.logger.info(f"Total similar document pairs above threshold {SIMILARITY_THRESHOLD}: {len(similarity_pairs)}")
+
+    # Build a mapping from document IDs to claims
+    doc_claims_map: Dict[str, List[Tuple[str, str, str]]] = {}
+    for claim in claims_data:
+        claim_id, claim_text, doc_id = claim
+        doc_claims_map.setdefault(doc_id, []).append(claim)
+
+    # Prepare claim pairs for comparison based on similarity pairs
     comparison_tasks = []
     processed_pairs = set()
     batch_size = 500  # Adjust batch size as needed
 
     async with aiohttp.ClientSession() as session:
-        for i in range(total_claims):
-            claim1_data = claims_data[i]
-            for j in range(i + 1, total_claims):
-                claim2_data = claims_data[j]
+        for idx, (doc_id1, doc_id2) in enumerate(similarity_pairs):
+            claims1 = doc_claims_map.get(doc_id1, [])
+            claims2 = doc_claims_map.get(doc_id2, [])
 
-                # Skip if from the same document
-                if claim1_data[2] == claim2_data[2]:
-                    continue
+            for claim1_data in claims1:
+                for claim2_data in claims2:
+                    claim_pair_key = (claim1_data[0], claim2_data[0])
+                    if claim_pair_key in processed_pairs:
+                        continue
+                    processed_pairs.add(claim_pair_key)
 
-                # Check if this pair has already been processed
-                pair_key = (claim1_data[0], claim2_data[0])
-                if pair_key in processed_pairs:
-                    continue
-                processed_pairs.add(pair_key)
+                    task = asyncio.create_task(
+                        client.compare_claims(session, claim1_data, claim2_data)
+                    )
+                    comparison_tasks.append(task)
 
-                task = asyncio.create_task(
-                    client.compare_claims(session, claim1_data, claim2_data)
-                )
-                comparison_tasks.append(task)
-
-                # If we've reached the batch size, process the batch
-                if len(comparison_tasks) >= batch_size:
-                    results = await asyncio.gather(*comparison_tasks)
-                    for res in results:
-                        if res[2] != 0:  # Only store non-zero relations
-                            # if True:
+                    # If we've reached the batch size, process the batch
+                    if len(comparison_tasks) >= BATCH_SIZE:
+                        results = await asyncio.gather(*comparison_tasks)
+                        for res in results:
                             relations_data.append(res)
-                    # Save intermediate relations
-                    relations_file = os.path.join(output_dir, f'relations_{timestamp}.csv')
-                    with open(relations_file, 'w', newline='', encoding='utf-8') as f:
-                        writer = csv.writer(f)
-                        writer.writerow(['id1', 'id2', 'relation'])
-                        writer.writerows(relations_data)
-                    comparison_tasks = []  # Reset tasks
+                        # Save intermediate relations
+                        with open(relations_file, 'a', newline='', encoding='utf-8') as f:
+                            writer = csv.writer(f)
+                            writer.writerows(relations_data)
+                        relations_data.clear()
+                        comparison_tasks = []  # Reset tasks
+
+            if idx % 10 == 0:
+                client.logger.info(f"Processed {idx}/{len(similarity_pairs)} similar document pairs")
 
         # Process any remaining tasks
         if comparison_tasks:
             results = await asyncio.gather(*comparison_tasks)
             for res in results:
-                if res[2] != 0:
-                    relations_data.append(res)
+                relations_data.append(res)
             # Save final relations
-            relations_file = os.path.join(output_dir, f'relations_{timestamp}.csv')
-            with open(relations_file, 'w', newline='', encoding='utf-8') as f:
+            with open(relations_file, 'a', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-                writer.writerow(['id1', 'id2', 'relation'])
                 writer.writerows(relations_data)
 
     client.logger.info(f"Comparison complete. Total relations found: {len(relations_data)}")
     client.logger.info(f"Processing complete. Final results saved to {relations_file}")
 
-
 def main():
-    asyncio.run(process_documents(
-        input_dir='dataset/enwiki20201020',
-        output_dir='dataset'
-    ))
-
+    asyncio.run(process_documents())
 
 if __name__ == "__main__":
     main()
