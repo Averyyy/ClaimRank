@@ -72,10 +72,9 @@ class OllamaClient:
                     result = await response.json()
                     return result
             except Exception as e:
-                # self.logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
+                self.logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
                 if attempt == max_retries - 1:
                     raise
-                await asyncio.sleep(2 ** attempt)  # Exponential backoff
                 await asyncio.sleep(2 ** attempt)  # Exponential backoff
 
     async def extract_claims(self, session, doc_id: str, text: str) -> List[Tuple[str, str, str]]:
@@ -100,23 +99,25 @@ class OllamaClient:
             return []
 
     async def compare_claims(self, session, claim1_data: Tuple[str, str, str], claim2_data: Tuple[str, str, str]) -> Tuple[str, str, int, str]:
-        """Compare two claims with improved error handling and response parsing."""
         claim1_id, claim1_text, _ = claim1_data
         claim2_id, claim2_text, _ = claim2_data
-        
         try:
             prompt = self.compare_prompt.format(claim1=claim1_text, claim2=claim2_text)
             response = await self.generate(session, prompt)
             result = response['response']
+            
+            output_lines = [line.strip() for line in result.split('\n') if line.strip().startswith('Output:')]
+            if not output_lines:
+                raise ValueError(f"No Output section found in response:\n{result}")
+                
+            output_line = output_lines[0]
+            result_number = output_line.replace('Output:', '').strip()
+            result_number = ''.join(filter(lambda x: x in '-0123456789', result_number))
 
-            # Simpler parsing: just look for last number in the response
-            numbers = [n for n in result.split() if n in ['1', '-1', '0']]
-            if numbers:
-                relation = int(numbers[-1])
-                return claim1_id, claim2_id, relation, result
+            if result_number in ['1', '-1', '0']:
+                return claim1_id, claim2_id, int(result_number), result
             else:
-                raise ValueError("No valid relation found in response")
-
+                raise ValueError(f"Invalid comparison result: {result_number} in response:\n{result}")
         except Exception as e:
             self.logger.error(f"Failed to compare claims {claim1_id} and {claim2_id}: {str(e)}")
             return claim1_id, claim2_id, 0, str(e)
@@ -140,7 +141,7 @@ async def process_documents():
     # Create empty relations file immediately
     with open(relations_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow(['id1', 'id2', 'relation', 'response'])
+        writer.writerow(['id1', 'id2', 'relation'])
 
     # Check for existing claims file
     existing_claims_files = [f for f in os.listdir(OUTPUT_DIR) if f.startswith('claims_') and f.endswith('.csv')]
@@ -153,7 +154,6 @@ async def process_documents():
         with open(os.path.join(OUTPUT_DIR, latest_claims_file), 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
             next(reader)  # Skip header
-            claims_data = [tuple(row) for row in reader]
             claims_data = [tuple(row) for row in reader]
 
         client.logger.info(f"Loaded {len(claims_data)} existing claims")
@@ -217,7 +217,6 @@ async def process_documents():
     # Prepare claim pairs for comparison based on similarity pairs
     comparison_tasks = []
     processed_pairs = set()
-    batch_size = 500  # Adjust batch size as needed
 
     async with aiohttp.ClientSession() as session:
         for idx, (doc_id1, doc_id2) in enumerate(similarity_pairs):
@@ -240,7 +239,8 @@ async def process_documents():
                     if len(comparison_tasks) >= BATCH_SIZE:
                         results = await asyncio.gather(*comparison_tasks)
                         for res in results:
-                            relations_data.append(res)
+                            if res[2] != 0:  # Only store non-zero relations
+                                relations_data.append(res)
                         # Save intermediate relations
                         with open(relations_file, 'a', newline='', encoding='utf-8') as f:
                             writer = csv.writer(f)
@@ -255,7 +255,8 @@ async def process_documents():
         if comparison_tasks:
             results = await asyncio.gather(*comparison_tasks)
             for res in results:
-                relations_data.append(res)
+                if res[2] != 0:
+                    relations_data.append(res)
             # Save final relations
             with open(relations_file, 'a', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
