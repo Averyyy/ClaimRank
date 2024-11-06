@@ -37,6 +37,7 @@ LOG_FILE = 'processing.log'
 
 # ========================================================
 
+
 class OllamaClient:
     def __init__(self):
         self.base_url = OLLAMA_BASE_URL
@@ -99,18 +100,19 @@ class OllamaClient:
             self.logger.error(f"Failed to extract claims from document {doc_id}: {str(e)}")
             return []
 
-    async def compare_claims(self, session, claim1_data: Tuple[str, str, str], claim2_data: Tuple[str, str, str]) -> Tuple[str, str, int, str]:
+    async def compare_claims(self, session, claim1_data: Tuple[str, str, str],
+                             claim2_data: Tuple[str, str, str]) -> Tuple[str, str, int, str]:
         claim1_id, claim1_text, _ = claim1_data
         claim2_id, claim2_text, _ = claim2_data
         try:
             prompt = self.compare_prompt.format(claim1=claim1_text, claim2=claim2_text)
             response = await self.generate(session, prompt)
             result = response['response']
-            
+
             output_lines = [line.strip() for line in result.split('\n') if line.strip().startswith('Output:')]
             if not output_lines:
                 raise ValueError(f"No Output section found in response:\n{result}")
-                
+
             output_line = output_lines[0]
             result_number = output_line.replace('Output:', '').strip()
             result_number = ''.join(filter(lambda x: x in '-0123456789', result_number))
@@ -131,7 +133,7 @@ async def process_documents():
 
     # Create timestamp for this run
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
     # Define output files
     claims_file = os.path.join(OUTPUT_DIR, f'claims_{timestamp}.csv')
     relations_file = os.path.join(OUTPUT_DIR, f'relations_{timestamp}.csv')
@@ -241,7 +243,7 @@ async def process_documents():
                         results = await asyncio.gather(*comparison_tasks)
                         for res in results:
                             # if res[2] != 0:  # Only store non-zero relations
-                                relations_data.append(res)
+                            relations_data.append(res)
                         # Save intermediate relations
                         with open(relations_file, 'a', newline='', encoding=FILE_ENCODING) as f:
                             writer = csv.writer(f)
@@ -257,7 +259,7 @@ async def process_documents():
             results = await asyncio.gather(*comparison_tasks)
             for res in results:
                 # if res[2] != 0:
-                    relations_data.append(res)
+                relations_data.append(res)
             # Save final relations
             with open(relations_file, 'a', newline='', encoding=FILE_ENCODING) as f:
                 writer = csv.writer(f)
@@ -266,8 +268,10 @@ async def process_documents():
     client.logger.info(f"Comparison complete. Total relations found: {len(relations_data)}")
     client.logger.info(f"Processing complete. Final results saved to {relations_file}")
 
+
 def main():
     asyncio.run(process_documents())
+
 
 if __name__ == "__main__":
     main()
