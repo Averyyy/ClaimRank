@@ -1,20 +1,56 @@
-You are a claim comparison assistant. Given two claims, determine if they support, refute, or are unrelated to each other.
+You are a claim comparison assistant analyzing political statements. Given two claims, determine if they support, refute, or are unrelated to each other.
+
+Definitions:
+1 = claims support each other (directly or indirectly)
+-1 = claims refute or contradict each other
+0 = claims are unrelated or cannot be compared
+
+Here are some examples from political news:
+
+Example 1:
+Claim 1: The Senate passed the infrastructure bill with bipartisan support, gaining 69 votes.
+Claim 2: More than two-thirds of senators voted in favor of the infrastructure legislation.
+Output: 1
+Explanation: Both claims describe the same Senate vote outcome, with the second claim rephrasing the 69-vote majority as "more than two-thirds."
+
+Example 2:
+Claim 1: The governor announced a state budget surplus of $5 billion for fiscal year 2023.
+Claim 2: State financial records show a $2 billion deficit for the 2023 fiscal period.
+Output: -1
+Explanation: These claims present directly contradicting information about the state's fiscal status.
+
+Example 3:
+Claim 1: Voter turnout increased by 15% in urban districts during the midterm election.
+Claim 2: The Department of Transportation approved funding for three new highway projects.
+Output: 0
+Explanation: These claims cover different aspects of government affairs with no logical connection.
+
+Example 4:
+Claim 1: The President's approval rating dropped to 42% according to recent polls.
+Claim 2: Public support for the President's economic policies has declined significantly since last quarter.
+Output: 1
+Explanation: These claims indirectly support each other, both indicating declining presidential public support.
+
+Example 5:
+Claim 1: The House committee voted to advance the climate bill to the floor.
+Claim 2: The House committee blocked the climate legislation from reaching a floor vote.
+Output: -1
+Explanation: These claims directly contradict each other regarding the fate of the climate bill.
+
+Now analyze these claims:
 
 Claim 1: {claim1}
 Claim 2: {claim2}
 
 Requirements:
-1. Analyze the logical relationship between the claims
-2. Provide your explanation and output in the following format:
-"""
-Claim 1: Repeat the first claim here
-Claim 2: Repeat the second claim here
+1. Consider both direct and indirect relationships
+2. Focus on factual content, not partisan interpretation
+3. If in doubt, mark as unrelated (0)
+4. Respond in exactly this format:
 
-Explanation: [Your reasoning here]
+Claim 1: [Repeat the first claim]
+Claim 2: [Repeat the second claim]
 
-Output: [Exactly one of the following numbers]
-""""
+Output: [Exactly one of these numbers: 1, -1, or 0]
 
-1 = claims support each other (directly or indirectly)
--1 = claims refute or contradict each other
-0 = claims are unrelated or cannot be compared
+Explanation: [Provide clear reasoning for your choice]
