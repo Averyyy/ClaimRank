@@ -1,6 +1,7 @@
 # llama.py
 import os
 import csv
+import time
 import logging
 import requests
 from datetime import datetime
@@ -8,14 +9,29 @@ from typing import List, Tuple, Dict
 
 # =================== Hyperparameters ====================
 
-FILTERED_CSV_PATH = 'dataset/filter.csv'
+# Paths to input files
+FILTERED_CSV_PATH = 'dataset/Filtered_data.csv'
 SIMILARITY_CSV_PATH = 'dataset/similarity_results.csv'
 FILE_ENCODING = 'ISO-8859-1'
+
+# Output directory
 OUTPUT_DIR = 'dataset'
+
+# Ollama API settings
 OLLAMA_BASE_URL = 'http://localhost:11434'
 MODEL_NAME = 'gemma2'
-SIMILARITY_THRESHOLD = 0.004
+
+# Similarity threshold for comparing documents
+SIMILARITY_THRESHOLD = 0.005  # Adjust as needed
+
+# Batch sizes
+EXTRACTION_BATCH_SIZE = 10  # Number of documents to process in each extraction batch
+COMPARISON_BATCH_SIZE = 10  # Number of claim pairs to process in each comparison batch
+
+# Retry settings
 MAX_RETRIES = 3
+
+# Logging settings
 LOGGING_LEVEL = logging.INFO
 LOG_FILE = 'processing.log'
 
@@ -26,6 +42,7 @@ class OllamaClient:
     def __init__(self):
         self.base_url = OLLAMA_BASE_URL
 
+        # Set up logging
         logging.basicConfig(
             level=LOGGING_LEVEL,
             format='%(asctime)s - %(levelname)s - %(message)s',
@@ -36,6 +53,7 @@ class OllamaClient:
         )
         self.logger = logging.getLogger(__name__)
 
+        # Load prompts
         with open('llm/prompt/extract.txt', 'r', encoding=FILE_ENCODING) as f:
             self.extract_prompt = f.read()
         with open('llm/prompt/compare.txt', 'r', encoding=FILE_ENCODING) as f:
@@ -53,24 +71,27 @@ class OllamaClient:
                 }
                 response = requests.post(url, json=payload, timeout=120)
                 response.raise_for_status()
-                return response.json()
+                result = response.json()
+                return result
             except Exception as e:
                 self.logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
                 if attempt == max_retries - 1:
                     raise
+                time.sleep(2 ** attempt)  # Exponential backoff
 
     def extract_claims(self, doc_id: str, text: str) -> List[Tuple[str, str, str]]:
         """Extract claims from text."""
         try:
             prompt = self.extract_prompt.format(text=text)
             response = self.generate(prompt)
+            print(response['response'])
             claims = []
             for line in response['response'].split('\n'):
                 if line.strip() and line.lstrip().startswith(tuple('0123456789')):
                     parts = line.split('.', 1)
                     if len(parts) == 2:
                         claim = parts[1].strip()
-                        if len(claim) > 10:
+                        if len(claim) > 10:  # Basic validation
                             claim_id = f"{doc_id.zfill(4)}{str(len(claims)+1).zfill(4)}"
                             claims.append((claim_id, claim, doc_id))
             if not claims:
@@ -82,6 +103,7 @@ class OllamaClient:
 
     def compare_claims(self, claim1_data: Tuple[str, str, str],
                        claim2_data: Tuple[str, str, str]) -> Tuple[str, str, int, str]:
+        """Compare two claims and return the result."""
         claim1_id, claim1_text, _ = claim1_data
         claim2_id, claim2_text, _ = claim2_data
         try:
@@ -111,19 +133,26 @@ def process_documents():
     claims_data = []
     relations_data = []
 
+    # Create timestamp for this run
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Define output files
     claims_file = os.path.join(OUTPUT_DIR, f'claims_{timestamp}.csv')
     relations_file = os.path.join(OUTPUT_DIR, f'relations_{timestamp}.csv')
 
+    # Ensure output directory exists
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+    # Create empty relations file immediately
     with open(relations_file, 'w', newline='', encoding=FILE_ENCODING) as f:
         writer = csv.writer(f)
         writer.writerow(['id1', 'id2', 'relation', 'response'])
 
+    # Check for existing claims file
     existing_claims_files = [f for f in os.listdir(OUTPUT_DIR) if f.startswith('claims_') and f.endswith('.csv')]
 
     if existing_claims_files:
+        # Use the most recent claims file
         latest_claims_file = max(existing_claims_files)
         client.logger.info(f"Found existing claims file: {latest_claims_file}")
 
@@ -134,6 +163,7 @@ def process_documents():
 
         client.logger.info(f"Loaded {len(claims_data)} existing claims")
     else:
+        # Load documents from filtered.csv
         client.logger.info(f"Loading documents from {FILTERED_CSV_PATH}")
         documents = []
         with open(FILTERED_CSV_PATH, 'r', encoding=FILE_ENCODING) as f:
@@ -146,18 +176,25 @@ def process_documents():
                     'validity': row['validity']
                 })
 
+        # Extract claims in batches
         client.logger.info(f"Extracting claims from {len(documents)} documents")
 
-        for doc in documents:
-            claims = client.extract_claims(doc['id'], doc['text'])
-            claims_data.extend(claims)
+        for i in range(0, len(documents), EXTRACTION_BATCH_SIZE):
+            batch_docs = documents[i:i + EXTRACTION_BATCH_SIZE]
+            for doc in batch_docs:
+                doc_id = doc['id']
+                text = doc['text']
+                claims = client.extract_claims(doc_id, text)
+                claims_data.extend(claims)
 
-        with open(claims_file, 'w', newline='', encoding=FILE_ENCODING) as f:
-            writer = csv.writer(f)
-            writer.writerow(['claim_id', 'claim', 'document_id'])
-            writer.writerows(claims_data)
-        client.logger.info(f"Claim extraction complete. Total claims extracted: {len(claims_data)}")
+            # Save extracted claims after each batch
+            with open(claims_file, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['claim_id', 'claim', 'document_id'])
+                writer.writerows(claims_data)
+            client.logger.info(f"Extracted claims from {i + len(batch_docs)}/{len(documents)} documents")
 
+    # Load similarity data
     client.logger.info(f"Loading similarity data from {SIMILARITY_CSV_PATH}")
     similarity_pairs = []
     with open(SIMILARITY_CSV_PATH, 'r', encoding=FILE_ENCODING) as f:
@@ -169,43 +206,48 @@ def process_documents():
 
     client.logger.info(f"Total similar document pairs above threshold {SIMILARITY_THRESHOLD}: {len(similarity_pairs)}")
 
+    # Build a mapping from document IDs to claims
     doc_claims_map: Dict[str, List[Tuple[str, str, str]]] = {}
     for claim in claims_data:
         claim_id, claim_text, doc_id = claim
         doc_claims_map.setdefault(doc_id, []).append(claim)
 
+    # Prepare claim pairs for comparison based on similarity pairs
     processed_pairs = set()
 
     for idx, (doc_id1, doc_id2) in enumerate(similarity_pairs):
         claims1 = doc_claims_map.get(doc_id1, [])
         claims2 = doc_claims_map.get(doc_id2, [])
 
+        claim_pairs = []
         for claim1_data in claims1:
             for claim2_data in claims2:
                 claim_pair_key = (claim1_data[0], claim2_data[0])
                 if claim_pair_key in processed_pairs:
                     continue
                 processed_pairs.add(claim_pair_key)
+                claim_pairs.append((claim1_data, claim2_data))
 
-                result = client.compare_claims(claim1_data, claim2_data)
-                relations_data.append(result)
+        # Process claim pairs in batches
+        for i in range(0, len(claim_pairs), COMPARISON_BATCH_SIZE):
+            batch_pairs = claim_pairs[i:i + COMPARISON_BATCH_SIZE]
+            for claim1_data, claim2_data in batch_pairs:
+                res = client.compare_claims(claim1_data, claim2_data)
+                if res[2] != 0:
+                    relations_data.append(res)
 
-                # Save results periodically
-                if len(relations_data) >= 10:
-                    with open(relations_file, 'a', newline='', encoding=FILE_ENCODING) as f:
-                        writer = csv.writer(f)
-                        writer.writerows(relations_data)
-                    relations_data = []
+            # Save intermediate relations
+            with open(relations_file, 'a', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerows(relations_data)
+            relations_data.clear()
+            # Optionally, sleep between batches to control processing speed
+            time.sleep(0.1)
 
         if idx % 10 == 0:
             client.logger.info(f"Processed {idx}/{len(similarity_pairs)} similar document pairs")
 
-    # Save any remaining relations
-    if relations_data:
-        with open(relations_file, 'a', newline='', encoding=FILE_ENCODING) as f:
-            writer = csv.writer(f)
-            writer.writerows(relations_data)
-
+    client.logger.info(f"Comparison complete.")
     client.logger.info(f"Processing complete. Final results saved to {relations_file}")
 
 
