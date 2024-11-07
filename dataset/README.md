@@ -1,1 +1,1 @@
-claim similarity data: https://drive.google.com/file/d/14GkVUxFgsC5Wc26_ljYwr8CNCNJphf6c/view?usp=sharing
+claim similarity data: https://drive.google.com/file/d/1466vg5zXLNds3RYFfLgd3YUkic-SNFGn/view?usp=sharing
