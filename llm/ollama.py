@@ -21,10 +21,10 @@ OUTPUT_DIR = 'dataset'
 
 # Ollama API settings
 OLLAMA_BASE_URL = 'http://localhost:11434'
-MODEL_NAME = 'gemma2'
+MODEL_NAME = 'gemma2:27b'
 
 # Similarity threshold for comparing claims
-SIMILARITY_THRESHOLD = 0.01  # Adjust as needed
+SIMILARITY_THRESHOLD = 0.009  # Adjust as needed
 
 # Batch sizes
 EXTRACTION_BATCH_SIZE = 10  # Number of documents to process in each extraction batch
