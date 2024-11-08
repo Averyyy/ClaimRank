@@ -71,6 +71,7 @@ class OllamaClient:
                     "prompt": prompt,
                     "stream": stream,
                     "max_tokens": 1000,
+                    "temperature": 0.0,
                 }
                 response = requests.post(url, json=payload, timeout=120)
                 response.raise_for_status()
@@ -82,11 +83,19 @@ class OllamaClient:
                     raise
                 time.sleep(2 ** attempt)  # Exponential backoff
 
-    def extract_claims(self, doc_id: str, text: str) -> List[Tuple[str, str, str]]:
-        """Extract claims from text."""
+    def extract_claims(self, doc_id: str, title: str, text: str, date: str) -> List[Tuple
+                                                                                    [str, str, str, str, str, str]]:
+        """Extract claims from text with additional context.
+
+        Returns:
+            List of tuples containing (claim_id, claim, doc_id, title, text, date)
+        """
         try:
-            prompt = self.extract_prompt.format(text=text)
+            # Include title and date in the prompt
+            context = f"Title: {title}\nDate: {date}\nText: {text}"
+            prompt = self.extract_prompt.format(text=context)
             response = self.generate(prompt)
+            # print('---------' + '\n' + prompt + '\n' + '---------')
             # print('---------' + '\n' + response['response'] + '\n' + '---------')
             claims = []
             for line in response['response'].split('\n'):
@@ -96,11 +105,11 @@ class OllamaClient:
                         claim = parts[1].strip()
                         if len(claim) > 10:  # Basic validation
                             claim_id = f"{doc_id.zfill(4)}{str(len(claims)+1).zfill(4)}"
-                            claims.append((claim_id, claim, doc_id))
+                            claims.append((claim_id, claim, doc_id, title, text, date))
             if not claims:
                 self.logger.warning(f"No valid claims extracted from document {doc_id}")
                 # retry until max_retries
-                return self.extract_claims(doc_id, text)
+                return self.extract_claims(doc_id, title, text, date)
 
             return claims
         except Exception as e:
@@ -150,9 +159,9 @@ def process_documents():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     # Create empty relations file immediately
-    with open(relations_file, 'w', newline='', encoding=SAVE_FILE_ENCODING) as f:
-        writer = csv.writer(f)
-        writer.writerow(['id1', 'id2', 'relation', 'response'])
+    # with open(relations_file, 'w', newline='', encoding=SAVE_FILE_ENCODING) as f:
+    #     writer = csv.writer(f)
+    #     writer.writerow(['id1', 'id2', 'relation', 'response'])
 
     # Check for existing claims file
     existing_claims_files = [f for f in os.listdir(OUTPUT_DIR) if f.startswith('claims_') and f.endswith('.csv')]
@@ -179,6 +188,7 @@ def process_documents():
                     'id': row['id'],
                     'title': row['title'],
                     'text': row['text'],
+                    'date': row.get('date', ''),  # Add date field
                     'validity': row['validity']
                 })
 
@@ -189,14 +199,16 @@ def process_documents():
             batch_docs = documents[i:i + EXTRACTION_BATCH_SIZE]
             for doc in batch_docs:
                 doc_id = doc['id']
+                title = doc['title']
                 text = doc['text']
-                claims = client.extract_claims(doc_id, text)
+                date = doc['date']
+                claims = client.extract_claims(doc_id, title, text, date)
                 claims_data.extend(claims)
 
             # Save extracted claims after each batch
             with open(claims_file, 'w', newline='', encoding=SAVE_FILE_ENCODING) as f:
                 writer = csv.writer(f)
-                writer.writerow(['claim_id', 'claim', 'document_id'])
+                writer.writerow(['claim_id', 'claim', 'document_id', 'title', 'text', 'date'])
                 writer.writerows(claims_data)
             client.logger.info(f"Extracted claims from {i + len(batch_docs)}/{len(documents)} documents")
 
