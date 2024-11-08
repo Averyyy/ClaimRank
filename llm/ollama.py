@@ -12,7 +12,7 @@ from typing import List, Tuple, Dict
 # Paths to input files
 FILTERED_CSV_PATH = 'dataset/Filtered_data.csv'
 # Update the path to the claims similarity file
-CLAIMS_SIMILARITY_CSV_PATH = 'dataset/filtered_claim_similarity_results.csv'
+CLAIMS_SIMILARITY_CSV_PATH = 'dataset/filtered_claim_similarity_results_1000-2000.csv'
 FILE_ENCODING = 'ISO-8859-1'
 SAVE_FILE_ENCODING = 'utf-8'
 
@@ -24,7 +24,7 @@ OLLAMA_BASE_URL = 'http://localhost:11434'
 MODEL_NAME = 'gemma2:27b'
 
 # Similarity threshold for comparing claims
-SIMILARITY_THRESHOLD = 0.009  # Adjust as needed
+SIMILARITY_THRESHOLD = 0.000  # Adjust as needed, now all pairs in CLAIMS_SIMILARITY_CSV_PATH are considered
 
 # Batch sizes
 EXTRACTION_BATCH_SIZE = 10  # Number of documents to process in each extraction batch

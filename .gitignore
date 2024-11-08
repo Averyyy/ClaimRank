@@ -163,5 +163,6 @@ cython_debug/
 
 # datasets
 enwiki20201020/
+sorted_claim_similarity_results.csv
 
 .DS_Store

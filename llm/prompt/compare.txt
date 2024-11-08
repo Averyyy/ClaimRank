@@ -1,56 +1,235 @@
-You are a claim comparison assistant analyzing political statements. Given two claims, determine if they support, refute, or are unrelated to each other.
+You are a statement comparison assistant for analyzing political statements. Given two statements, determine if they support each other, contradict each other, or are unrelated.
 
 Definitions:
-1 = claims support each other (directly or indirectly)
--1 = claims refute or contradict each other
-0 = claims are unrelated or cannot be compared
+- 1 = Statements support each other (directly or indirectly)
+- -1 = Statements contradict or conflict with each other  
+- 0 = Statements are unrelated or incomparable
 
-Here are some examples from political news:
+Analysis Guidelines:
+- Enclose all thinking in <thinking> tags, exploring multiple angles and approaches
+- Break down solution in <step> tags with remaining step budget in <count> tags. Start with 20 steps, request more if complex. Subtract 1 after each step, stop at 0.
+- Adapt reasoning process based on intermediate results and reflections
+- Use <reflection> tags periodically to evaluate progress, staying critical and honest about your reasoning
+- After each reflection, assign quality score 0.0-1.0 in <reward> tag to guide your approach
+
+Important Note:
+- Temporal proximity or sequence alone does not constitute support (1) or contradiction (-1). Events occurring close in time or one after another are typically still unrelated (0) unless there is a clear causal or logical relationship.
+
+Example Cases:
+
+---
 
 Example 1:
-Claim 1: The Senate passed the infrastructure bill with bipartisan support, gaining 69 votes.
-Claim 2: More than two-thirds of senators voted in favor of the infrastructure legislation.
+
+Claim 1: The Senate passed the infrastructure bill with bipartisan support of 69 votes.
+
+Claim 2: Over two-thirds of senators voted in favor of the infrastructure legislation.
+
+Explanation:
+
+<thinking>Let's analyze the numerical and logical relationship between these statements.</thinking>
+
+<step>1. Calculate two-thirds of Senate: 100 senators * (2/3) = 66.67 votes</step>
+<count>19</count>
+
+<step>2. Compare vote counts: Claim 1 states 69 votes, which exceeds 66.67</step>
+<count>18</count>
+
+<step>3. Analyze logical connection: Both claims describe same event with consistent information supporting each other</step>
+<count>17</count>
+
+<reflection>Claims reinforce each other by providing complementary details about same event</reflection>
+
+<reward>0.95</reward>
+
 Output: 1
-Explanation: Both claims describe the same Senate vote outcome, with the second claim rephrasing the 69-vote majority as "more than two-thirds."
+
+---
 
 Example 2:
-Claim 1: The governor announced a state budget surplus of $5 billion for fiscal year 2023.
-Claim 2: State financial records show a $2 billion deficit for the 2023 fiscal period.
+
+Claim 1: The governor announced a $5 billion state budget surplus for fiscal year 2023.
+
+Claim 2: State financial records show a $2 billion deficit for fiscal year 2023.
+
+Explanation:
+
+<thinking>Let's analyze the financial data and implications.</thinking>
+
+<step>1. Identify financial statements: $5B surplus vs $2B deficit</step>
+<count>19</count>
+
+<step>2. Assess compatibility: Cannot have both surplus and deficit in same fiscal year</step>
+<count>18</count>
+
+<step>3. Analyze contradiction: Statements present opposite financial conditions</step>
+<count>17</count>
+
+<reflection>Statements directly contradict each other and cannot both be true</reflection>
+
+<reward>0.98</reward>
+
 Output: -1
-Explanation: These claims present directly contradicting information about the state's fiscal status.
+
+---
 
 Example 3:
-Claim 1: Voter turnout increased by 15% in urban districts during the midterm election.
+
+Claim 1: Voter turnout in urban areas increased 15% during midterm elections.
+
 Claim 2: The Department of Transportation approved funding for three new highway projects.
+
+Explanation:
+
+<thinking>Let's determine if any relationship exists between these statements.</thinking>
+
+<step>1. Identify subjects: Claim 1 about voter turnout; Claim 2 about transportation funding</step>
+<count>19</count>
+
+<step>2. Check connection: No apparent direct or indirect relationship</step>
+<count>18</count>
+
+<step>3. Evaluate relationship: Claims cover different topics with no overlap</step>
+<count>17</count>
+
+<reflection>Claims are unrelated, addressing independent issues with no connection</reflection>
+
+<reward>0.9</reward>
+
 Output: 0
-Explanation: These claims cover different aspects of government affairs with no logical connection.
+
+---
 
 Example 4:
-Claim 1: The President's approval rating dropped to 42% according to recent polls.
-Claim 2: Public support for the President's economic policies has declined significantly since last quarter.
-Output: 1
-Explanation: These claims indirectly support each other, both indicating declining presidential public support.
+
+Claim 1: Elon Musk was a member of Trump's Strategic and Policy Forum and Manufacturing Jobs Initiative.
+
+Claim 2: Donald Trump took office as U.S. President in January 2017.
+
+Explanation:
+
+<thinking>Let's analyze if these statements are related.</thinking>
+
+<step>1. Identify subjects: Claim 1 discusses Musk's roles; Claim 2 states Trump's inauguration timing</step>
+<count>19</count>
+
+<step>2. Evaluate relationship: While Trump's presidency was prerequisite for Musk's positions, statements lack direct support or contradiction</step>
+<count>18</count>
+
+<step>3. Consider causality: Temporal sequence alone doesn't establish support</step>
+<count>17</count>
+
+<reflection>Claims unrelated; merely temporal proximity without direct connection</reflection>
+
+<reward>0.93</reward>
+
+Output: 0
+
+---
 
 Example 5:
-Claim 1: The House committee voted to advance the climate bill to the floor.
-Claim 2: The House committee blocked the climate legislation from reaching a floor vote.
-Output: -1
-Explanation: These claims directly contradict each other regarding the fate of the climate bill.
+
+Claim 1: The Supreme Court voted 6-3 to overturn the precedent.
+
+Claim 2: Six justices voted in favor of overturning, with three dissenting.
+
+Explanation:
+
+<thinking>Let's compare numerical information in both statements.</thinking>
+
+<step>1. Identify vote count: Both claims mention 6-3 vote</step>
+<count>19</count>
+
+<step>2. Evaluate consistency: Claims provide consistent details about same event</step>
+<count>18</count>
+
+<step>3. Analyze relationship: Claims support each other by presenting same information differently</step>
+<count>17</count>
+
+<reflection>Claims support each other by confirming same result</reflection>
+
+<reward>0.97</reward>
+
+Output: 1
+
+---
+
+Example 6:
+
+Claim 1: Barack Obama took office as president in January 2009.
+
+Claim 2: The financial crisis led to Lehman Brothers' collapse in September 2008.
+
+Explanation:
+
+<thinking>Let's determine if relationship exists between these historical events.</thinking>
+
+<step>1. Identify events: Claim 1 about Obama's inauguration; Claim 2 about Lehman's collapse</step>
+<count>19</count>
+
+<step>2. Analyze temporal proximity: Events occurred close in time</step>
+<count>18</count>
+
+<step>3. Evaluate relationship: Temporal proximity alone doesn't establish connection; no direct causal or logical link</step>
+<count>17</count>
+
+<reflection>Claims unrelated; describe independent events without direct connection</reflection>
+
+<reward>0.92</reward>
+
+Output: 0
+
+---
+
+Example 7:
+
+Claim 1: The Paris Agreement was reached by nearly 200 countries in 2015.
+
+Claim 2: In June 2017, U.S. President Donald Trump announced that the United States would withdraw from the Paris climate accord.
+
+Explanation:
+
+<thinking>Let's analyze relationship between Paris Agreement and U.S. withdrawal.</thinking>
+
+<step>1. Identify subjects: Claim 1 discusses Agreement formation; Claim 2 describes U.S. withdrawal</step>
+<count>19</count>
+
+<step>2. Evaluate relationship: While both claims involve Paris Agreement, they describe different events</step>
+<count>18</count>
+
+<step>3. Consider contradiction: While U.S. withdrawal opposes agreement's intent, statements themselves are sequential facts rather than direct contradiction</step>
+<count>17</count>
+
+<reflection>Claims related but not contradictory; withdrawal is subsequent action but doesn't negate agreement's existence</reflection>
+
+<reward>0.94</reward>
+
+Output: 0
+
+---
 
 Now analyze these claims:
 
 Claim 1: {claim1}
+
 Claim 2: {claim2}
 
 Requirements:
-1. Consider both direct and indirect relationships
-2. Focus on factual content, not partisan interpretation
-3. If in doubt, mark as unrelated (0)
-4. Respond in exactly this format:
 
+1. Consider direct and indirect relationships
+2. Focus on factual content, not partisan interpretations
+3. Mark as unrelated (0) when in doubt
+4. Consider step by step rather than holistically
+5. Use clear line breaks (\n) to separate three sections:
+
+Respond in exactly this format:
 Claim 1: [Repeat the first claim]
 Claim 2: [Repeat the second claim]
 
+Explanation: [Provide clear and step by step reasoning for your choice]
+
 Output: [Exactly one of these numbers: 1, -1, or 0]
 
-Explanation: [Provide clear reasoning for your choice]
+Important Note:
+- Temporal proximity or sequence alone does not constitute support (1) or contradiction (-1). Events occurring at same time typically unrelated (0) unless clear causal/logical relationship exists
+- Ensure analysis strictly follows provided definitions and guidelines
