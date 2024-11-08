@@ -32,6 +32,105 @@ You are a fact extraction assistant. Given a text, extract clear, verifiable cla
 - Regularly evaluate progress using `<reflection>` tags. Be critical and honest about your reasoning process.
 - Assign a quality score between 0.0 and 1.0 using `<reward>` tags after each reflection.
 
+**Examples:**
+
+**Example 1:**
+
+**Text:** "The President visited Ukraine. He announced new sanctions. The visit lasted two days."
+
+**Model Output:**
+--------------------------------------------
+
+*Section1: Explanation
+Explanation for claim 1:
+<thinking>Identify "The President" and ensure full context without adding unspecified information.</thinking>
+<step>1. Resolve "The President" to include a full title, but the name is not provided.</step>
+<count>19</count>
+<step>2. The text mentions "visited Ukraine"; construct a complete statement.</step>
+<count>18</count>
+<reflection>The claim should state that the President visited Ukraine, without adding a name or date not mentioned in the text.</reflection>
+<reward>0.95</reward>
+
+<OUTPUT> The President visited Ukraine. </OUTPUT>
+
+Explanation for claim 2:
+<thinking>Resolve pronouns and include full context for the announcement of new sanctions.</thinking>
+<step>1. "He" refers to "The President"; replace "He" with "The President".</step>
+<count>17</count>
+<step>2. Combine "announced new sanctions" with the context of the Ukraine visit.</step>
+<count>16</count>
+<reflection>Ensure the claim is complete and does not add unspecified details.</reflection>
+<reward>0.9</reward>
+
+<OUTPUT> The President announced new sanctions during his Ukraine visit. </OUTPUT>
+
+Explanation for claim 3:
+<thinking>Provide full context for the duration of the President's visit.</thinking>
+<step>1. Include "The President's visit to Ukraine lasted two days."</step>
+<count>15</count>
+<reflection>The claim is a standalone fact with full context.</reflection>
+<reward>0.95</reward>
+
+<OUTPUT> The President's visit to Ukraine lasted two days. </OUTPUT>
+
+*Section2: Claims extracted
+1. The President visited Ukraine.
+2. The President announced new sanctions during his Ukraine visit.
+3. The President's visit to Ukraine lasted two days.
+
+--------------------------------------------
+**Note:** Since specific names or dates are not provided in the text, do **not** add them.
+
+---
+
+**Example 2:**
+
+**Text:** "The candidate won the election. His supporters celebrated in the capital. Turnout was high."
+
+**Model Output:**
+--------------------------------------------
+*Section1: Explanation
+Explanation for claim 1:
+<thinking>Identify "The candidate" and construct a complete statement without adding unspecified names.</thinking>
+<step>1. Use "The candidate" as is since no name is provided.</step>
+<count>19</count>
+<step>2. State that "The candidate won the election."</step>
+<count>18</count>
+<reflection>The claim is complete and verifiable without adding extra information.</reflection>
+<reward>0.9</reward>
+
+<OUTPUT> The candidate won the election. </OUTPUT>
+
+Explanation for claim 2:
+<thinking>Resolve "His supporters" and "the capital" to provide full context.</thinking>
+<step>1. Replace "His supporters" with "The candidate's supporters."</step>
+<count>17</count>
+<step>2. Include "celebrated in the capital" without specifying the city.</step>
+<count>16</count>
+<reflection>Cannot add the city name since it's not mentioned; the claim remains complete.</reflection>
+<reward>0.85</reward>
+
+<OUTPUT> The candidate's supporters celebrated in the capital after his election victory. </OUTPUT>
+
+Explanation for claim 3:
+<thinking>Provide context for "Turnout was high" within the election.</thinking>
+<step>1. State "Voter turnout was high in the election."</step>
+<count>15</count>
+<reflection>The claim is a complete fact about the election.</reflection>
+<reward>0.95</reward>
+
+<OUTPUT> Voter turnout was high in the election. </OUTPUT>
+
+*Section2: Claims extracted
+1. The candidate won the election.
+2. The candidate's supporters celebrated in the capital after his election victory.
+3. Voter turnout was high in the election.
+
+**Note:** Do **not** add specific names, dates, or locations unless mentioned in the text.
+
+---
+
+**Your Task:**
 Now extract claims from this text:
 
 {text}
@@ -46,7 +145,7 @@ Explanation for claim 1:
 <reflection>[Your reflection]</reflection>
 <reward>[Score between 0.0-1.0]</reward>
 ... [Continue with more steps if needed]
-<OUTPUT> [Final answer for claim 1]
+<OUTPUT> [Final answer for claim 1] </OUTPUT>
 
 Explanation for claim 2:
 <thinking>[Your thinking process]</thinking>
@@ -55,7 +154,7 @@ Explanation for claim 2:
 <reflection>[Your reflection]</reflection>
 <reward>[Score between 0.0-1.0]</reward>
 ... [Continue with more steps if needed]
-<OUTPUT> [Final answer for claim 2] 
+<OUTPUT> [Final answer for claim 2] </OUTPUT>
 
 ... [Continue for more explaination and claim if needed...]
 
@@ -72,4 +171,3 @@ Explanation for claim 2:
 - Use the **Analysis Guidelines** to structure your extraction process.
 - **Do not** add any information, names, or dates that are not present in the text.
 - Ensure that the output is Explanation - Output - Explanation - Claim and so on, strictly following the given format.
-
