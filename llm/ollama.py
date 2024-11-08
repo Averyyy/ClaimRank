@@ -69,7 +69,8 @@ class OllamaClient:
                 payload = {
                     "model": MODEL_NAME,
                     "prompt": prompt,
-                    "stream": stream
+                    "stream": stream,
+                    "max_tokens": 1000,
                 }
                 response = requests.post(url, json=payload, timeout=120)
                 response.raise_for_status()
@@ -93,10 +94,13 @@ class OllamaClient:
                     if len(parts) == 2:
                         claim = parts[1].strip()
                         if len(claim) > 10:  # Basic validation
-                            claim_id = f"{doc_id.zfill(8)}{str(len(claims)+1).zfill(4)}"
+                            claim_id = f"{doc_id.zfill(4)}{str(len(claims)+1).zfill(4)}"
                             claims.append((claim_id, claim, doc_id))
             if not claims:
                 self.logger.warning(f"No valid claims extracted from document {doc_id}")
+                # retry until max_retries
+                return self.extract_claims(doc_id, text)
+
             return claims
         except Exception as e:
             self.logger.error(f"Failed to extract claims from document {doc_id}: {str(e)}")
