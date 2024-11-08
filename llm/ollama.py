@@ -21,7 +21,7 @@ OUTPUT_DIR = 'dataset'
 
 # Ollama API settings
 OLLAMA_BASE_URL = 'http://localhost:11434'
-MODEL_NAME = 'gemma2:27b'
+MODEL_NAME = 'gemma2'
 
 # Similarity threshold for comparing claims
 SIMILARITY_THRESHOLD = 0.000  # Adjust as needed, now all pairs in CLAIMS_SIMILARITY_CSV_PATH are considered
@@ -87,6 +87,7 @@ class OllamaClient:
         try:
             prompt = self.extract_prompt.format(text=text)
             response = self.generate(prompt)
+            # print('---------' + '\n' + response['response'] + '\n' + '---------')
             claims = []
             for line in response['response'].split('\n'):
                 if line.strip() and line.lstrip().startswith(tuple('0123456789')):
