@@ -5,8 +5,8 @@ claim_id,claim,document_id
 000000010001,The United States will cease payments to the UN Green Climate Fund.,0001
 000000010002,Business leaders expressed disappointment with the US withdrawal from the Paris agreement and warned of potential economic repercussions.,0001
 000000010003,Democratic leaders strongly criticized Trump's decision to withdraw from the Paris agreement.,0001
-000000020001,"In a speech, President Donald Trump stated that even with full compliance from all nations, the Paris Agreement would only reduce global temperatures by two-tenths of one degree Celsius by 2100.",0002
-000000020002,"A study published by MIT in April 2016 titled ""How much of a difference will the Paris Agreement make?"" found that if countries adhered to their pledges, global warming would slow by between 0.6 degrees and 1.1 degrees Celsius by 2100.",0002
+000000020001,"<OUTPUT>In a speech, President Donald Trump stated that even with full compliance from all nations, the Paris Agreement would only reduce global temperatures by two-tenths of one degree Celsius by 2100.</OUTPUT>",0002
+000000020002,"<OUTPUT>A study published by MIT in April 2016 titled ""How much of a difference will the Paris Agreement make?"" found that if countries adhered to their pledges, global warming would slow by between 0.6 degrees and 1.1 degrees Celsius by 2100.</OUTPUT>",0002
 000000030001,James Comey will testify before the Senate Intelligence Committee on June 8th.,0003
 000000030002,James Comey was fired by President Trump on May 9th.,0003
 000000040001,Elon Musk resigned from Donald Trump's manufacturing jobs council because he disagreed with Trump's decision to withdraw the United States from the Paris climate accord.,0004
@@ -18,8 +18,8 @@ claim_id,claim,document_id
 000000070001,There are differing opinions on the US withdrawal from the Paris Climate Agreement.,0007
 000000070002,Political figures and leaders criticize President Trump for withdrawing from the Paris Climate Agreement.,0007
 000000070003,Critics argue that the withdrawal will harm the environment and diminish US leadership in combating climate change.,0007
-000000080001,Emmanuel Macron categorically ruled out any renegotiation of the Paris climate accord.,0008
-000000080002," Emmanuel Macron stated that he would not turn his back on Americans, even though the United States had turned its back on the world.",0008
+000000080001,<OUTPUT>Emmanuel Macron categorically ruled out any renegotiation of the Paris climate accord.</OUTPUT>,0008
+000000080002,"<OUTPUT> Emmanuel Macron stated that he would not turn his back on Americans, even though the United States had turned its back on the world.</OUTPUT>",0008
 000000090001,"President Donald Trump explained his decision to withdraw the United States from the Paris climate accord in phone calls on Thursday with German Chancellor Angela Merkel, French President Emmanuel Macron, Canadian Prime Minister Justin Trudeau and British Prime Minister Theresa May.",0009
 000000090002,President Donald Trump reassured world leaders that America remains committed to the Transatlantic alliance and robust efforts to protect the environment.,0009
 000000100001,Theresa May expressed disappointment to Donald Trump.,0010
@@ -99,8 +99,8 @@ claim_id,claim,document_id
 000000430002,"Griffin posed in photographs holding up the likeness of a severed head, which resembled President Trump.",0043
 000000440001,"Representative Devin Nunes issued subpoenas to the CIA, FBI, and NSA without informing Democratic members of the committee.",0044
 000000440002,"The subpoenas issued by Representative Devin Nunes related to ""unmasking"" were separate from the Russia investigation.",0044
-000000450001,"U.S. Homeland Security Secretary John Kelly said he was open to discussing letting more than 50,000 victims of Haiti’s 2010 earthquake stay in the United States past next January.",0045
-000000450002,Temporary Protected Status (TPS) for Haitians was implemented seven years after a 7.0-magnitude earthquake struck near Port-au-Prince in January 2010.,0045
+000000450001,"<OUTPUT>U.S. Homeland Security Secretary John Kelly said he was open to discussing letting more than 50,000 victims of Haiti’s 2010 earthquake stay in the United States past next January.</OUTPUT>",0045
+000000450002,<OUTPUT>Temporary Protected Status (TPS) for Haitians was implemented seven years after a 7.0-magnitude earthquake struck near Port-au-Prince in January 2010.</OUTPUT>,0045
 000000460001,Hillary Clinton said she suspects President Donald Trump’s campaign gave guidance to Russian government propaganda efforts during last year’s U.S. presidential campaign.,0046
 000000460002,Hillary Clinton said propaganda spread on sites such as Facebook helped cost her the election.,0046
 000000470001,President Donald Trump sought to insert himself into congressional investigations on Russia.,0047
@@ -245,8 +245,8 @@ claim_id,claim,document_id
 000001090001,The American Civil Liberties Union sued the U.S. Department of Homeland Security on Thursday.,0109
 000001090002,"There have been hunger strikes at U.S. Immigration and Customs Enforcement (ICE) detention centers in Georgia, Oregon and Washington in recent weeks.",0109
 000001090003,"From April 1-22, an average of 36,235 immigrants were in detention per day.",0109
-000001100001,U.S. lawmakers introduced legislation on Thursday seeking to stop at least a portion of President Donald Trump's sale of weapons to Saudi Arabia.,0110
-000001100002,"The arms deal includes $110 billion of U.S. arms, with options running as high as $350 billion over 10 years.",0110
+000001100001,<OUTPUT>U.S. lawmakers introduced legislation on Thursday seeking to stop at least a portion of President Donald Trump's sale of weapons to Saudi Arabia.</OUTPUT>,0110
+000001100002,"<OUTPUT>The arms deal includes $110 billion of U.S. arms, with options running as high as $350 billion over 10 years.</OUTPUT>",0110
 000001110001,U.S. President Donald Trump arrived in Sicily from Brussels on Thursday.,0111
 000001110002,Other leaders are expected to pressure Donald Trump on trade and climate change.,0111
 000001120001,The Federal Bureau of Investigation declined to give the House Oversight Committee documents regarding communications between former FBI chief James Comey and President Donald Trump.,0112
@@ -503,8 +503,8 @@ claim_id,claim,document_id
 000002220002,"Republican Senator John McCain expressed being ""speechless"" in response to reports of Donald Trump's comments about James Comey during the May 10 meeting.",0222
 000002230001,Sebastien Ogier won the Rally of Portugal for a record-equaling fifth time.,0223
 000002230002,Sebastien Ogier leads Thierry Neuville by a margin of 22 points.,0223
-000002240001, U.S. President Donald Trump discussed his firing of FBI Director James Comey with Russia's foreign minister Sergei Lavrov to explain why he felt unable to cooperate with Russia.,0224
-000002240002," During a May 10 meeting, U.S. President Donald Trump said that he fired the head of the FBI, James Comey, because ""He was crazy, a real nut job."" ",0224
+000002240001,<OUTPUT> U.S. President Donald Trump discussed his firing of FBI Director James Comey with Russia's foreign minister Sergei Lavrov to explain why he felt unable to cooperate with Russia.</OUTPUT>,0224
+000002240002,"<OUTPUT> During a May 10 meeting, U.S. President Donald Trump said that he fired the head of the FBI, James Comey, because ""He was crazy, a real nut job."" </OUTPUT>",0224
 000002250001,James Comey agreed to testify before the U.S. Senate Intelligence Committee.,0225
 000002250002,The public hearing will be scheduled after the May 29 Memorial Day holiday.,0225
 000002260001,President Donald Trump fired FBI Director James Comey.,0226
@@ -671,3 +671,24 @@ claim_id,claim,document_id
 000002980002,Critics say the Regulatory Accountability Act creates so many new requirements that it would paralyze regulators working to establish even the most basic rules and standards. They also say it makes cutting industry and banks’ costs a higher priority than protecting public health and safety.,0298
 000002990001,Arrests of suspected illegal immigrants rose by nearly 40 percent in the first 100 days of Donald Trump's presidency.,0299
 000002990002,"Between January 22 and the end of April, ICE made 41,318 arrests.",0299
+000003000001,An article on a State Department website in April about Mar-a-Lago was eventually withdrawn.,0300
+000003000002,A Twitter account for the State Department’s Office of Global Women’s Issues retweeted a post by Ivanka Trump in which she promoted her new book.,0300
+000003010001,The Senate Judiciary Committee asked the FBI for memos related to former FBI Director James Comey's dealings with his superiors in the Trump and Obama administrations.,0301
+000003010002,"The Senate Judiciary Committee also asked the White House for records of interactions with Comey, including those relating to the FBI's investigation of alleged ties between President Trump’s associates and Russia, or the Clinton email investigation, including all audio recordings, transcripts, notes, summaries, or memoranda.",0301
+000003020001,<OUTPUT>The group of Republican governors recommends maintaining the Affordable Care Act's Medicaid expansion while allowing other states to expand and capping federal spending on certain populations through block grants or per capita caps.</OUTPUT>,0302
+000003020002,"<OUTPUT>Senator Rob Portman wrote in an op-ed that he and other senators tasked with writing a healthcare bill have continued to engage with governors, many of whom share concerns about Medicaid but want more flexibility.</OUTPUT>",0302
+000003030001,"U.S. President Donald Trump said he would use his upcoming trip to Saudi Arabia to challenge the leaders of Muslim countries to ""fight hatred and extremism"" while pursuing a peaceful future for their faith.",0303
+000003040001,Donald Trump asked James Comey to end the FBI's investigation.,0304
+000003040002,The FBI's investigation was about the ties between Michael Flynn and Russia.,0304
+000003050001,The U.S. Senate Intelligence Committee asked James Comey to appear before the panel.,0305
+000003050002,The Senate Intelligence Committee asked Andrew McCabe to send any notes or memos prepared by James Comey.,0305
+000003060001,Paul Ryan stated that he wants to hear from James Comey.,0306
+000003060002,"When asked, Paul Ryan stated that he has confidence in Donald Trump.",0306
+000003070001,Theresa May said that the British government has confidence in its relationship with the United States.,0307
+000003070002,Britain will continue to share intelligence with the United States.,0307
+000003070003,"""Decisions about what President Trump discusses with anybody that he has in the White House is a matter for President Trump,"" said Theresa May.",0307
+000003080001,U.S. President Donald Trump shared classified information with Russia about a potential airline plot by Islamic State.,0308
+000003080002,The compromised source could be either a human intelligence asset or well-placed signal intelligence.,0308
+000003090001,Washington Governor Jay Inslee signed a bill on Tuesday that paves the way for the state to create what is believed to be the first system in the US to certify marijuana as organic.,0309
+000003090002,Republican Senator Ann Rivers said marijuana certified as organically grown is likely to be on sale in Washington in about a year and a half.,0309
+000003090003,Washington was the second state to begin legal recreational pot sales in mid-2014.,0309
