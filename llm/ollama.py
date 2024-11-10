@@ -12,7 +12,7 @@ from typing import List, Tuple, Dict
 # Paths to input files
 FILTERED_CSV_PATH = 'dataset/Filtered_data.csv'
 # Update the path to the claims similarity file
-CLAIMS_SIMILARITY_CSV_PATH = 'dataset/filtered_claim_similarity_results.csv'
+CLAIMS_SIMILARITY_CSV_PATH = 'dataset/filtered_claim_similarity_1002-17110.csv'
 FILE_ENCODING = 'ISO-8859-1'
 SAVE_FILE_ENCODING = 'utf-8'
 
