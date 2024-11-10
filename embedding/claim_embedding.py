@@ -3,7 +3,7 @@ import faiss
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-df = pd.read_csv('./dataset/claims_20241106_184644.csv')
+df = pd.read_csv('./dataset/claims_20241108_100331.csv')
 
 documents = df['claim'].tolist()
 

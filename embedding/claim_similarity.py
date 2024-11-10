@@ -24,9 +24,23 @@ for idx in range(total_documents):
         # similarity = round(similarity, 4)
         similarity_results.add((pair, similarity))
 
-similarity_results = [(f"{pair[0]:04}", f"{pair[1]:04}", similarity) for pair, similarity in similarity_results]
-sorted_similarity_results = sorted(similarity_results, key=lambda x: x[2], reverse=True)
+similarity_results = [(pair[0], pair[1], similarity) for pair, similarity in similarity_results]
 similarity_df = pd.DataFrame(similarity_results, columns=['id1', 'id2', 'similarity'])
-similarity_df.to_csv('./dataset/claim_similarity_results.csv', index=False)
 
-print(similarity_df.head())
+
+claims_df = pd.read_csv('./dataset/claims_20241108_100331.csv')
+id_mapping = {i: claims_df.iloc[i]['claim_id'] for i in range(len(claims_df))}
+
+similarity_df['id1'] = similarity_df['id1'].map(id_mapping)
+similarity_df['id2'] = similarity_df['id2'].map(id_mapping)
+
+similarity_df['id1'] = similarity_df['id1'].astype(str).str.zfill(8)
+similarity_df['id2'] = similarity_df['id2'].astype(str).str.zfill(8)
+
+df_sorted = similarity_df.sort_values(by=similarity_df.columns[2], ascending=False)
+df_first_1000 = df_sorted.head(1000)
+
+df_first_1000.to_csv('./dataset/filtered_claim_similarity_results.csv', index=False)
+df_sorted.to_csv('./dataset/sorted_claim_similarity_results.csv', index=False)
+
+print(df_sorted.head())
