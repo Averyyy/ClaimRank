@@ -12,7 +12,7 @@ from typing import List, Tuple, Dict
 # Paths to input files
 FILTERED_CSV_PATH = 'dataset/Filtered_data.csv'
 # Update the path to the claims similarity file
-CLAIMS_SIMILARITY_CSV_PATH = 'dataset/filtered_claim_similarity_results_1000-2000.csv'
+CLAIMS_SIMILARITY_CSV_PATH = 'dataset/filtered_claim_similarity_results.csv'
 FILE_ENCODING = 'ISO-8859-1'
 SAVE_FILE_ENCODING = 'utf-8'
 
@@ -116,11 +116,11 @@ class OllamaClient:
             self.logger.error(f"Failed to extract claims from document {doc_id}: {str(e)}")
             return []
 
-    def compare_claims(self, claim1_data: Tuple[str, str, str],
-                       claim2_data: Tuple[str, str, str]) -> Tuple[str, str, int, str]:
+    def compare_claims(self, claim1_data: Tuple[str, str, str, str, str, str],
+                       claim2_data: Tuple[str, str, str, str, str, str]) -> Tuple[str, str, int, str]:
         """Compare two claims and return the result."""
-        claim1_id, claim1_text, _ = claim1_data
-        claim2_id, claim2_text, _ = claim2_data
+        claim1_id, claim1_text, _, title, text, date = claim1_data
+        claim2_id, claim2_text, _, title, text, date = claim2_data
         try:
             prompt = self.compare_prompt.format(claim1=claim1_text, claim2=claim2_text)
             response = self.generate(prompt)
@@ -157,11 +157,6 @@ def process_documents():
 
     # Ensure output directory exists
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-    # Create empty relations file immediately
-    # with open(relations_file, 'w', newline='', encoding=SAVE_FILE_ENCODING) as f:
-    #     writer = csv.writer(f)
-    #     writer.writerow(['id1', 'id2', 'relation', 'response'])
 
     # Check for existing claims file
     existing_claims_files = [f for f in os.listdir(OUTPUT_DIR) if f.startswith('claims_') and f.endswith('.csv')]
@@ -215,7 +210,7 @@ def process_documents():
     # Build a mapping from claim IDs to claim data
     claim_id_to_data: Dict[str, Tuple[str, str, str]] = {}
     for claim in claims_data:
-        claim_id, claim_text, doc_id = claim
+        claim_id, claim_text, doc_id, title, text, date = claim
         claim_id_to_data[claim_id] = claim
 
     # Load claim similarity data
@@ -229,6 +224,10 @@ def process_documents():
                 similarity_pairs.append((row['id1'], row['id2'], similarity))
 
     client.logger.info(f"Total similar claim pairs above threshold {SIMILARITY_THRESHOLD}: {len(similarity_pairs)}")
+    # Create empty relations file immediately
+    with open(relations_file, 'w', newline='', encoding=SAVE_FILE_ENCODING) as f:
+        writer = csv.writer(f)
+        writer.writerow(['id1', 'id2', 'relation', 'response'])
 
     # Prepare claim pairs for comparison based on claim similarities
     processed_pairs = set()
