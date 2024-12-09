@@ -1,0 +1,10 @@
+gitignore-import-and-ignore: True
+ignore-tree-and-content:
+  - ".repo-to-text-settings.yaml"
+  - "dataset/"
+  - "__pycache__"
+  - "edge_statistics.csv"
+  - "pagerank_2_0.ipynb"
+  - "pagerank.ipynb"
+  - "llm/prompt/compare.txt"
+  - "llm/prompt/extract.txt"

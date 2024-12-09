@@ -1,0 +1,8 @@
+You are a helpful assistant. Below are some documents retrieved for a given query. Use these documents to answer the query accurately.
+
+Documents:
+{documents}
+
+Query: {query}
+
+Please provide a helpful and accurate answer based on the provided documents.

@@ -1,0 +1,1076 @@
+Directory: ClaimRank
+
+Directory Structure:
+```
+.
+├── .gitignore
+├── LICENSE
+├── README.md
+├── embedding
+│   ├── embedding/README.md
+│   ├── embedding/claim_embedding.py
+│   ├── embedding/claim_embedding_mac.py
+│   ├── embedding/claim_similarity.py
+│   ├── embedding/embedding.py
+│   ├── embedding/similarity.py
+│   └── embedding/trans_id.py
+├── llm
+│   ├── llm/ollama.py
+│   ├── llm/plot.py
+├── main.py
+└── rank
+    ├── rank/final_document_scores.csv
+    ├── rank/rank.py
+    └── rank/stats.py
+```
+
+Contents of LICENSE:
+```
+MIT License
+
+Copyright (c) 2024 Averyyy
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+```
+
+Contents of README.md:
+```
+dataset: partition from https://www.kaggle.com/datasets/emineyetm/fake-news-detection-datasets/data
+
+```
+
+Contents of main.py:
+```
+from llm.llama import process_documents
+import asyncio
+
+
+def main():
+    asyncio.run(process_documents(
+    ))
+    # More steps after
+
+
+if __name__ == "__main__":
+    main()
+
+```
+
+Contents of llm/plot.py:
+```
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+from scipy.optimize import fsolve
+
+# Original data points
+x_data = np.array([154, 355, 586, 1046, 1519, 2405])
+y_data = np.array([100, 200, 300, 400, 500, 600])
+
+# Calculate delta values
+delta_x = np.diff(x_data)
+delta_y = np.diff(y_data)
+delta_rates = delta_y / delta_x
+x_delta = (x_data[1:] + x_data[:-1]) / 2
+
+# Calculate first delta
+first_delta = y_data[0] / x_data[0]
+x_delta = np.insert(x_delta, 0, x_data[0])
+delta_rates = np.insert(delta_rates, 0, first_delta)
+
+# Define pure exponential decay function
+
+
+def decay_func(x, a, b):
+    return a * np.exp(-b * x)
+
+
+# Fit curve
+popt, pcov = curve_fit(decay_func, x_delta, delta_rates, p0=[0.5, 0.0005])
+a, b = popt
+
+# Calculate integral function
+
+
+def integral_func(x):
+    return (a/b) * (1 - np.exp(-b * x))
+
+
+# Get 99% point
+x_99 = -np.log(0.01) / b  # 99% point
+print(f"99% of relations requires {int(x_99)} claim pairs")
+
+# Plot delta curve
+plt.figure(figsize=(12, 8))
+x_smooth = np.linspace(0, 10000, 1000)
+y_smooth = decay_func(x_smooth, a, b)
+
+# Add shaded area for 99%
+plt.fill_between(x_smooth[x_smooth <= x_99], y_smooth[x_smooth <= x_99],
+                 alpha=0.2, color='blue', label='99% Coverage Area')
+
+plt.scatter(x_delta, delta_rates, color='red', s=100, label='Actual Delta')
+plt.plot(x_smooth, y_smooth, 'b-', linewidth=2, label='Fitted Delta Curve')
+
+# Add vertical line at 99% point
+plt.axvline(x=x_99, color='green', linestyle='--', alpha=0.5,
+            label=f'99% Point ({int(x_99)} pairs)')
+
+plt.xlabel('Claims Pairs')
+plt.ylabel('Delta (New Relations/New Pair)')
+plt.title('Delta Curve')
+plt.legend()
+plt.grid(True)
+plt.xlim(0, 6000)
+plt.ylim(0, max(delta_rates) * 1.1)
+
+plt.tight_layout()
+plt.show()
+
+print(f"\nFitted function parameters:")
+print(f"a = {a:.6f}")
+print(f"b = {b:.6f}")
+print(f"Theoretical maximum total relations: {integral_func(np.inf):.1f}")
+
+```
+
+Contents of llm/ollama.py:
+```
+# llama.py
+import os
+import csv
+import time
+import logging
+import requests
+from datetime import datetime
+from typing import List, Tuple, Dict
+
+# =================== Hyperparameters ====================
+
+# Paths to input files
+FILTERED_CSV_PATH = 'dataset/Filtered_data.csv'
+# Update the path to the claims similarity file
+CLAIMS_SIMILARITY_CSV_PATH = 'dataset/filtered_claim_similarity_1002-17110.csv'
+FILE_ENCODING = 'ISO-8859-1'
+SAVE_FILE_ENCODING = 'utf-8'
+
+# Output directory
+OUTPUT_DIR = 'dataset'
+
+# Ollama API settings
+OLLAMA_BASE_URL = 'http://localhost:11434'
+MODEL_NAME = 'gemma2'
+
+# Similarity threshold for comparing claims
+SIMILARITY_THRESHOLD = 0.000  # Adjust as needed, now all pairs in CLAIMS_SIMILARITY_CSV_PATH are considered
+
+# Batch sizes
+EXTRACTION_BATCH_SIZE = 10  # Number of documents to process in each extraction batch
+COMPARISON_BATCH_SIZE = 10  # Number of claim pairs to process in each comparison batch
+
+# Retry settings
+MAX_RETRIES = 3
+
+# Logging settings
+LOGGING_LEVEL = logging.INFO
+LOG_FILE = 'processing.log'
+
+# ========================================================
+
+
+class OllamaClient:
+    def __init__(self):
+        self.base_url = OLLAMA_BASE_URL
+
+        # Set up logging
+        logging.basicConfig(
+            level=LOGGING_LEVEL,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler(LOG_FILE),
+                logging.StreamHandler()
+            ]
+        )
+        self.logger = logging.getLogger(__name__)
+
+        # Load prompts
+        with open('llm/prompt/extract.txt', 'r', encoding=SAVE_FILE_ENCODING) as f:
+            self.extract_prompt = f.read()
+        with open('llm/prompt/compare.txt', 'r', encoding=SAVE_FILE_ENCODING) as f:
+            self.compare_prompt = f.read()
+
+    def generate(self, prompt, stream=False, max_retries=MAX_RETRIES):
+        """Generate function with retry mechanism."""
+        for attempt in range(max_retries):
+            try:
+                url = f"{self.base_url}/api/generate"
+                payload = {
+                    "model": MODEL_NAME,
+                    "prompt": prompt,
+                    "stream": stream,
+                    "max_tokens": 1000,
+                    "temperature": 0.0,
+                }
+                response = requests.post(url, json=payload, timeout=120)
+                response.raise_for_status()
+                result = response.json()
+                return result
+            except Exception as e:
+                self.logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
+                if attempt == max_retries - 1:
+                    raise
+                time.sleep(2 ** attempt)  # Exponential backoff
+
+    def extract_claims(self, doc_id: str, title: str, text: str, date: str) -> List[Tuple
+                                                                                    [str, str, str, str, str, str]]:
+        """Extract claims from text with additional context.
+
+        Returns:
+            List of tuples containing (claim_id, claim, doc_id, title, text, date)
+        """
+        try:
+            # Include title and date in the prompt
+            context = f"Title: {title}\nDate: {date}\nText: {text}"
+            prompt = self.extract_prompt.format(text=context)
+            response = self.generate(prompt)
+            # print('---------' + '\n' + prompt + '\n' + '---------')
+            # print('---------' + '\n' + response['response'] + '\n' + '---------')
+            claims = []
+            for line in response['response'].split('\n'):
+                if line.strip() and line.lstrip().startswith(tuple('0123456789')):
+                    parts = line.split('.', 1)
+                    if len(parts) == 2:
+                        claim = parts[1].strip()
+                        if len(claim) > 10:  # Basic validation
+                            claim_id = f"{doc_id.zfill(4)}{str(len(claims)+1).zfill(4)}"
+                            claims.append((claim_id, claim, doc_id, title, text, date))
+            if not claims:
+                self.logger.warning(f"No valid claims extracted from document {doc_id}")
+                # retry until max_retries
+                return self.extract_claims(doc_id, title, text, date)
+
+            return claims
+        except Exception as e:
+            self.logger.error(f"Failed to extract claims from document {doc_id}: {str(e)}")
+            return []
+
+    def compare_claims(self, claim1_data: Tuple[str, str, str, str, str, str],
+                       claim2_data: Tuple[str, str, str, str, str, str]) -> Tuple[str, str, int, str]:
+        """Compare two claims and return the result."""
+        claim1_id, claim1_text, _, title, text, date = claim1_data
+        claim2_id, claim2_text, _, title, text, date = claim2_data
+        try:
+            prompt = self.compare_prompt.format(claim1=claim1_text, claim2=claim2_text)
+            response = self.generate(prompt)
+            result = response['response']
+
+            output_lines = [line.strip() for line in result.split('\n') if line.strip().startswith('Output:')]
+            if not output_lines:
+                raise ValueError(f"No Output section found in response:\n{result}")
+
+            output_line = output_lines[0]
+            result_number = output_line.replace('Output:', '').strip()
+            result_number = ''.join(filter(lambda x: x in '-0123456789', result_number))
+
+            if result_number in ['1', '-1', '0']:
+                return claim1_id, claim2_id, int(result_number), result.replace('\n', ' ').replace('\r', ' ').strip()
+            else:
+                raise ValueError(f"Invalid comparison result: {result_number} in response:\n{result}")
+        except Exception as e:
+            self.logger.error(f"Failed to compare claims {claim1_id} and {claim2_id}: {str(e)}")
+            return claim1_id, claim2_id, 0, str(e)
+
+
+def process_documents():
+    client = OllamaClient()
+    claims_data = []
+    relations_data = []
+
+    # Create timestamp for this run
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Define output files
+    claims_file = os.path.join(OUTPUT_DIR, f'claims_{timestamp}.csv')
+    relations_file = os.path.join(OUTPUT_DIR, f'relations_{timestamp}.csv')
+
+    # Ensure output directory exists
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    # Check for existing claims file
+    existing_claims_files = [f for f in os.listdir(OUTPUT_DIR) if f.startswith('claims_') and f.endswith('.csv')]
+
+    if existing_claims_files:
+        # Use the most recent claims file
+        latest_claims_file = max(existing_claims_files)
+        client.logger.info(f"Found existing claims file: {latest_claims_file}")
+
+        with open(os.path.join(OUTPUT_DIR, latest_claims_file), 'r', encoding=SAVE_FILE_ENCODING) as f:
+            reader = csv.reader(f)
+            next(reader)  # Skip header
+            claims_data = [tuple(row) for row in reader]
+
+        client.logger.info(f"Loaded {len(claims_data)} existing claims")
+    else:
+        # Load documents from filtered.csv
+        client.logger.info(f"Loading documents from {FILTERED_CSV_PATH}")
+        documents = []
+        with open(FILTERED_CSV_PATH, 'r', encoding=FILE_ENCODING) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                documents.append({
+                    'id': row['id'],
+                    'title': row['title'],
+                    'text': row['text'],
+                    'date': row.get('date', ''),  # Add date field
+                    'validity': row['validity']
+                })
+
+        # Extract claims in batches
+        client.logger.info(f"Extracting claims from {len(documents)} documents")
+
+        for i in range(0, len(documents), EXTRACTION_BATCH_SIZE):
+            batch_docs = documents[i:i + EXTRACTION_BATCH_SIZE]
+            for doc in batch_docs:
+                doc_id = doc['id']
+                title = doc['title']
+                text = doc['text']
+                date = doc['date']
+                claims = client.extract_claims(doc_id, title, text, date)
+                claims_data.extend(claims)
+
+            # Save extracted claims after each batch
+            with open(claims_file, 'w', newline='', encoding=SAVE_FILE_ENCODING) as f:
+                writer = csv.writer(f)
+                writer.writerow(['claim_id', 'claim', 'document_id', 'title', 'text', 'date'])
+                writer.writerows(claims_data)
+            client.logger.info(f"Extracted claims from {i + len(batch_docs)}/{len(documents)} documents")
+
+    # Build a mapping from claim IDs to claim data
+    claim_id_to_data: Dict[str, Tuple[str, str, str]] = {}
+    for claim in claims_data:
+        claim_id, claim_text, doc_id, title, text, date = claim
+        claim_id_to_data[claim_id] = claim
+
+    # Load claim similarity data
+    client.logger.info(f"Loading claim similarity data from {CLAIMS_SIMILARITY_CSV_PATH}")
+    similarity_pairs = []
+    with open(CLAIMS_SIMILARITY_CSV_PATH, 'r', encoding=FILE_ENCODING) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            similarity = float(row['similarity'])
+            if similarity >= SIMILARITY_THRESHOLD:
+                similarity_pairs.append((row['id1'], row['id2'], similarity))
+
+    client.logger.info(f"Total similar claim pairs above threshold {SIMILARITY_THRESHOLD}: {len(similarity_pairs)}")
+    # Create empty relations file immediately
+    with open(relations_file, 'w', newline='', encoding=SAVE_FILE_ENCODING) as f:
+        writer = csv.writer(f)
+        writer.writerow(['id1', 'id2', 'relation', 'response'])
+
+    # Prepare claim pairs for comparison based on claim similarities
+    processed_pairs = set()
+
+    for idx in range(0, len(similarity_pairs), COMPARISON_BATCH_SIZE):
+        batch_pairs = similarity_pairs[idx: idx + COMPARISON_BATCH_SIZE]
+        for pair in batch_pairs:
+            claim1_id = pair[0]
+            claim2_id = pair[1]
+            # similarity = float(pair[2])  # Similarity score, you can use it if needed
+
+            # Check if claim IDs exist in the claims data
+            claim1_data = claim_id_to_data.get(claim1_id)
+            claim2_data = claim_id_to_data.get(claim2_id)
+            if not claim1_data or not claim2_data:
+                # Skip if claim data not found
+                client.logger.warning(f"Claim data not found for IDs: {claim1_id}, {claim2_id}")
+                continue
+
+            claim_pair_key = (claim1_id, claim2_id)
+            if claim_pair_key in processed_pairs:
+                continue
+            processed_pairs.add(claim_pair_key)
+
+            res = client.compare_claims(claim1_data, claim2_data)
+            if res[2] != 0:
+                relations_data.append(res)
+
+        # Save intermediate relations
+        with open(relations_file, 'a', newline='', encoding=SAVE_FILE_ENCODING) as f:
+            writer = csv.writer(f)
+            writer.writerows(relations_data)
+        relations_data.clear()
+        # Optionally, sleep between batches to control processing speed
+        time.sleep(0.1)
+
+        if idx % (COMPARISON_BATCH_SIZE * 10) == 0:
+            client.logger.info(f"Processed {idx}/{len(similarity_pairs)} similar claim pairs")
+
+    client.logger.info(f"Comparison complete.")
+    client.logger.info(f"Processing complete. Final results saved to {relations_file}")
+
+
+def main():
+    process_documents()
+
+
+if __name__ == "__main__":
+    main()
+
+```
+
+Contents of embedding/similarity.py:
+```
+import faiss
+import numpy as np
+import pandas as pd
+
+index = faiss.read_index("./dataset/vector.index")
+
+total_documents = index.ntotal
+k = total_documents
+
+similarity_results = set()
+
+for idx in range(total_documents):
+    embedding = index.reconstruct(idx)
+    embedding = np.array(embedding).reshape(1, -1)
+
+    distances, indices = index.search(embedding, k)
+
+    for i in range(idx+1, k):
+        id1 = idx
+        id2 = indices[0][i]
+        pair = tuple(sorted([id1, id2]))
+
+        similarity = 1 / (1 + distances[0][i])
+        # similarity = round(similarity, 4)
+        similarity_results.add((pair, similarity))
+
+similarity_results = [(f"{pair[0]:04}", f"{pair[1]:04}", similarity) for pair, similarity in similarity_results]
+similarity_df = pd.DataFrame(similarity_results, columns=['id1', 'id2', 'similarity'])
+similarity_df.to_csv('./dataset/similarity_results.csv', index=False)
+
+print(similarity_df.head())
+```
+
+Contents of embedding/embedding.py:
+```
+import numpy as np
+import faiss
+import pandas as pd
+from sentence_transformers import SentenceTransformer
+
+df = pd.read_csv('./dataset/Filtered_data.csv', encoding='ISO-8859-1')
+
+documents = df['text'].tolist()
+
+dimensions = 512
+
+model = SentenceTransformer("mixedbread-ai/mxbai-embed-large-v1", truncate_dim=dimensions)
+
+embeddings = model.encode(documents)
+embeddings = np.array(embeddings).astype('float32')
+
+
+
+index = faiss.IndexFlatL2(dimensions)
+index.add(embeddings)
+
+faiss.write_index(index, "./dataset/vector.index")
+
+
+```
+
+Contents of embedding/claim_embedding_mac.py:
+```
+from tqdm import tqdm
+import gc
+import torch
+from sentence_transformers import SentenceTransformer
+import pandas as pd
+import faiss
+import numpy as np
+import os
+# 强制使用 CPU 并禁用并行性
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
+print("Loading data...")
+df = pd.read_csv('dataset/claims_20241108_100331.csv')
+documents = df['claim'].tolist()
+print(f"Total documents: {len(documents)}")
+
+dimensions = 512
+batch_size = 8  # 使用很小的 batch size
+
+print("Loading model...")
+model = SentenceTransformer("mixedbread-ai/mxbai-embed-large-v1",
+                            truncate_dim=dimensions,
+                            device='cpu')  # 强制使用 CPU
+
+print("Starting encoding...")
+embeddings = []
+
+try:
+    for i in tqdm(range(0, len(documents), batch_size)):
+        batch = documents[i:i + batch_size]
+
+        # 确保清理内存
+        gc.collect()
+
+        # 编码当前批次
+        batch_embeddings = model.encode(
+            batch,
+            batch_size=batch_size,
+            show_progress_bar=False,
+            convert_to_numpy=True
+        )
+
+        embeddings.extend(batch_embeddings)
+
+        # 每处理100个样本保存一次
+        if i > 0 and i % 100 == 0:
+            print(f"\nSaving checkpoint at {i} documents...")
+            temp_embeddings = np.array(embeddings).astype('float32')
+            np.save(f'./dataset/embeddings_checkpoint_{i}.npy', temp_embeddings)
+
+except Exception as e:
+    print(f"Error occurred: {str(e)}")
+    # 保存已处理的结果
+    if embeddings:
+        temp_embeddings = np.array(embeddings).astype('float32')
+        np.save('./dataset/embeddings_last_checkpoint.npy', temp_embeddings)
+    raise e
+
+print("Converting to numpy array...")
+embeddings = np.array(embeddings).astype('float32')
+
+print("Creating FAISS index...")
+index = faiss.IndexFlatL2(dimensions)
+index.add(embeddings)
+
+print("Saving index...")
+faiss.write_index(index, "./dataset/claim_vector.index")
+
+print("Done!")
+
+```
+
+Contents of embedding/claim_similarity.py:
+```
+import faiss
+import numpy as np
+import pandas as pd
+
+index = faiss.read_index("./dataset/claim_vector.index")
+
+total_documents = index.ntotal
+k = total_documents
+
+similarity_results = set()
+
+for idx in range(total_documents):
+    embedding = index.reconstruct(idx)
+    embedding = np.array(embedding).reshape(1, -1)
+
+    distances, indices = index.search(embedding, k)
+
+    for i in range(idx+1, k):
+        id1 = idx
+        id2 = indices[0][i]
+        pair = tuple(sorted([id1, id2]))
+
+        similarity = 1 / (1 + distances[0][i])
+        # similarity = round(similarity, 4)
+        similarity_results.add((pair, similarity))
+
+similarity_results = [(pair[0], pair[1], similarity) for pair, similarity in similarity_results]
+similarity_df = pd.DataFrame(similarity_results, columns=['id1', 'id2', 'similarity'])
+
+
+claims_df = pd.read_csv('./dataset/claims_20241108_100331.csv')
+id_mapping = {i: claims_df.iloc[i]['claim_id'] for i in range(len(claims_df))}
+
+similarity_df['id1'] = similarity_df['id1'].map(id_mapping)
+similarity_df['id2'] = similarity_df['id2'].map(id_mapping)
+
+similarity_df['id1'] = similarity_df['id1'].astype(str).str.zfill(8)
+similarity_df['id2'] = similarity_df['id2'].astype(str).str.zfill(8)
+
+df_sorted = similarity_df.sort_values(by=similarity_df.columns[2], ascending=False)
+df_first_1000 = df_sorted.head(1000)
+
+df_first_1000.to_csv('./dataset/filtered_claim_similarity_results.csv', index=False)
+df_sorted.to_csv('./dataset/sorted_claim_similarity_results.csv', index=False)
+
+print(df_sorted.head())
+```
+
+Contents of embedding/README.md:
+```
+run claim_embedding then run claim_similarity
+change the csv file name with new file
+```
+
+Contents of embedding/claim_embedding.py:
+```
+import numpy as np
+import faiss
+import pandas as pd
+from sentence_transformers import SentenceTransformer
+
+df = pd.read_csv('./dataset/claims_20241108_100331.csv')
+
+documents = df['claim'].tolist()
+
+dimensions = 512
+
+model = SentenceTransformer("mixedbread-ai/mxbai-embed-large-v1", truncate_dim=dimensions)
+
+embeddings = model.encode(documents)
+embeddings = np.array(embeddings).astype('float32')
+
+
+
+index = faiss.IndexFlatL2(dimensions)
+index.add(embeddings)
+
+faiss.write_index(index, "./dataset/claim_vector.index")
+
+
+```
+
+Contents of embedding/trans_id.py:
+```
+# import pandas as pd
+
+# # Load the claims file (claims_20241106_184644.csv)
+# claims_df = pd.read_csv('./dataset/claims_20241106_184644.csv')
+
+# # Ensure that 'claim_id' is a string and zero-padded to 8 digits
+# claims_df['claim_id'] = claims_df['claim_id'].apply(lambda x: str(x).zfill(8))
+
+# # Create a mapping from the row index to the claim ID using integers as keys
+# id_mapping = {i: claims_df.iloc[i]['claim_id'] for i in range(len(claims_df))}
+
+# # Load the claim similarity results (claim_similarity_results.csv)
+# similarity_df = pd.read_csv('./dataset/claim_similarity_results.csv')
+
+# # Replace id1 and id2 with their corresponding claim IDs from the mapping
+# similarity_df['id1'] = similarity_df['id1'].map(id_mapping)
+# similarity_df['id2'] = similarity_df['id2'].map(id_mapping)
+
+# # Print the modified similarity dataframe
+# print(similarity_df)
+
+# # Optionally, save the updated results to a new CSV
+# similarity_df = sorted(similarity_df, key=lambda x: x[2], reverse=True)
+# similarity_df.to_csv('./dataset/updated_claim_similarity_results.csv', index=False)
+
+import pandas as pd
+
+# Load the CSV file
+df = pd.read_csv('./dataset/claim_similarity_results.csv')
+
+df['id1'] = df['id1'].astype(str).str.zfill(8)
+df['id2'] = df['id2'].astype(str).str.zfill(8)
+
+# Sort the DataFrame by the third column (index 2)
+df_sorted = df.sort_values(by=df.columns[2], ascending=False)
+
+
+# Keep only the first 1000 rows
+df_first_1000 = df_sorted.head(1000)
+
+# Save the result to a new CSV file
+df_first_1000.to_csv('./dataset/filtered_claim_similarity_results.csv', index=False)
+df_sorted.to_csv('./dataset/sorted_claim_similarity_results.csv', index=False)
+
+
+```
+
+Contents of rank/stats.py:
+```
+import pandas as pd
+from collections import defaultdict
+
+
+def find_clusters(edges):
+    """使用并查集找到所有连通分量（聚类）"""
+    def find(parent, x):
+        if parent[x] != x:
+            parent[x] = find(parent, parent[x])
+        return parent[x]
+
+    def union(parent, x, y):
+        parent[find(parent, x)] = find(parent, y)
+
+    # 初始化并查集
+    parent = {}
+
+    # 收集所有唯一的文档ID
+    all_docs = set()
+    for (doc1, doc2) in edges:
+        all_docs.add(doc1)
+        all_docs.add(doc2)
+
+    # 初始化每个文档的父节点为自身
+    for doc in all_docs:
+        parent[doc] = doc
+
+    # 合并有边相连的文档
+    for (doc1, doc2) in edges:
+        union(parent, doc1, doc2)
+
+    # 找出所有聚类
+    clusters = defaultdict(set)
+    for doc in all_docs:
+        root = find(parent, doc)
+        clusters[root].add(doc)
+
+    return dict(clusters)
+
+
+def count_document_edges(input_file, output_file):
+    # 读取CSV文件
+    df = pd.read_csv(input_file)
+
+    # 创建文档对之间的边计数字典
+    edge_counts = defaultdict(lambda: {'positive': 0, 'negative': 0})
+
+    # 收集所有出现的文档ID
+    all_docs = set()
+    doc_edges = set()  # 用于存储所有有边的文档对
+
+    # 遍历每一行
+    for _, row in df.iterrows():
+        # 将ID转换为字符串并获取前4位
+        doc1 = str(row['id1']).zfill(8)[:4]
+        doc2 = str(row['id2']).zfill(8)[:4]
+
+        all_docs.add(doc1)
+        all_docs.add(doc2)
+
+        # 确保文档对的顺序一致（较小ID在前）
+        doc_pair = tuple(sorted([doc1, doc2]))
+        doc_edges.add(doc_pair)
+
+        # 根据relation更新计数
+        if row['relation'] == 1:
+            edge_counts[doc_pair]['positive'] += 1
+        elif row['relation'] == -1:
+            edge_counts[doc_pair]['negative'] += 1
+
+    # 找出没有任何边的文档
+    docs_with_edges = set()
+    for doc1, doc2 in doc_edges:
+        docs_with_edges.add(doc1)
+        docs_with_edges.add(doc2)
+
+    isolated_docs = all_docs - docs_with_edges
+
+    # 找出所有聚类
+    clusters = find_clusters(doc_edges)
+
+    # 创建结果数据框
+    results = []
+    for doc_pair, counts in edge_counts.items():
+        results.append({
+            'doc1': doc_pair[0],
+            'doc2': doc_pair[1],
+            'positive_edges': counts['positive'],
+            'negative_edges': counts['negative'],
+            'total_edges': counts['positive'] + counts['negative']
+        })
+
+    # 转换为DataFrame并保存
+    results_df = pd.DataFrame(results)
+
+    # 计算总计
+    total_positive = results_df['positive_edges'].sum()
+    total_negative = results_df['negative_edges'].sum()
+    total_edges = results_df['total_edges'].sum()
+
+    # 添加总计行
+    totals_row = pd.DataFrame([{
+        'doc1': 'TOTAL',
+        'doc2': '',
+        'positive_edges': total_positive,
+        'negative_edges': total_negative,
+        'total_edges': total_edges
+    }])
+
+    results_df = pd.concat([results_df, totals_row], ignore_index=True)
+
+    # 保存到CSV
+    results_df.to_csv(output_file, index=False)
+
+    # 打印统计信息
+    print(f"结果已保存到 {output_file}")
+    print(f"\n总计:")
+    print(f"总正边数量: {total_positive}")
+    print(f"总负边数量: {total_negative}")
+    print(f"总边数量: {total_edges}")
+    print(f"\n文档统计:")
+    print(f"总文档数量: {len(all_docs)}")
+    print(f"有边的文档数量: {len(docs_with_edges)}")
+    print(f"孤立文档数量: {len(isolated_docs)}")
+    if isolated_docs:
+        print("孤立文档列表:", sorted(isolated_docs))
+
+    print(f"\n聚类统计:")
+    print(f"聚类数量: {len(clusters)}")
+    print("各聚类大小:")
+    for i, (_, cluster) in enumerate(clusters.items(), 1):
+        print(f"聚类 {i}: {len(cluster)} 个文档")
+
+
+# 使用示例
+count_document_edges('dataset/relations_gemma2_27b_0.009_0-1000.csv', 'edge_statistics.csv')
+
+```
+
+Contents of rank/rank.py:
+```
+import os
+import pandas as pd
+import numpy as np
+
+
+def claim_relations_to_doc_relations(claim_relations_df):
+    claim_relations_df['doc_id1'] = claim_relations_df['id1'].str[:4]
+    claim_relations_df['doc_id2'] = claim_relations_df['id2'].str[:4]
+
+    doc_relation_counts = claim_relations_df.groupby(['doc_id1', 'doc_id2'])['relation'].agg(
+        support_count=lambda x: (x == 1).sum(),
+        oppose_count=lambda x: (x == -1).sum()
+    ).reset_index()
+
+    doc_relation_counts['net_relation'] = doc_relation_counts['support_count'] - doc_relation_counts['oppose_count']
+    max_net_relation = doc_relation_counts['net_relation'].abs().max()
+    if max_net_relation == 0:
+        doc_relation_counts['normalized_relation'] = 0
+    else:
+        doc_relation_counts['normalized_relation'] = doc_relation_counts['net_relation'] / max_net_relation
+
+    document_relations_df = doc_relation_counts[['doc_id1', 'doc_id2', 'normalized_relation']]
+
+    return document_relations_df
+
+
+def trustrank_core(relations_df, s_seed, max_iterations=100, alpha=0.2, tolerance=1e-6):
+    """
+    使用给定的种子分布s_seed计算TrustRank或Anti-TrustRank。
+    s = alpha * f_I + (1 - alpha) * s_seed_vec
+    其中f_I = (I + 1)/2, I = P_pos - N_neg
+
+    若s_seed为空（无种子），则返回一个全0向量。
+    """
+
+    # 提取所有的文档ID
+    document_ids = set(relations_df['doc_id1']).union(set(relations_df['doc_id2']))
+    document_ids = sorted(document_ids)
+    doc_index = {doc_id: idx for idx, doc_id in enumerate(document_ids)}
+    index_doc = {idx: doc_id for doc_id, idx in doc_index.items()}
+    N = len(document_ids)
+
+    # 若无种子，则返回全0.5向量
+    if len(s_seed) == 0:
+        return {d_id: 0.5 for d_id in document_ids}
+
+    # 将 s_seed 转化为向量形式
+    s_seed_vec = np.zeros(N)
+    for d_id, val in s_seed.items():
+        if d_id in doc_index:
+            s_seed_vec[doc_index[d_id]] = val
+
+    # 归一化 s_seed_vec
+    sum_seed = s_seed_vec.sum()
+    if sum_seed > 0:
+        s_seed_vec = s_seed_vec / sum_seed
+    else:
+        # 无法归一化时，返回全0
+        return {d_id: 0.0 for d_id in document_ids}
+
+    # 构建正负向邻接矩阵
+    W_plus = np.zeros((N, N))
+    W_minus = np.zeros((N, N))
+    for _, row in relations_df.iterrows():
+        doc_id1 = row['doc_id1']
+        doc_id2 = row['doc_id2']
+        normalized_relation = row['normalized_relation']
+        i = doc_index[doc_id1]
+        j = doc_index[doc_id2]
+        if normalized_relation > 0:
+            W_plus[i, j] += normalized_relation
+        elif normalized_relation < 0:
+            W_minus[i, j] -= normalized_relation
+
+    W_plus_sum = W_plus.sum(axis=0)
+    W_minus_sum = W_minus.sum(axis=0)
+
+    # 初始化s向量为0，为体现仅由迭代和种子决定
+    s = np.zeros(N)
+
+    for iteration in range(max_iterations):
+        s_prev = s.copy()
+        P_pos = np.zeros(N)
+        N_neg = np.zeros(N)
+
+        # 正负向影响
+        for d in range(N):
+            if W_plus_sum[d] > 0:
+                P_pos[d] = np.dot(W_plus[:, d], s_prev) / W_plus_sum[d]
+            else:
+                P_pos[d] = 0
+
+            if W_minus_sum[d] > 0:
+                N_neg[d] = np.dot(W_minus[:, d], s_prev) / W_minus_sum[d]
+            else:
+                N_neg[d] = 0
+
+        I = P_pos - N_neg
+        f_I = (I + 1) / 2
+
+        s = alpha * f_I + (1 - alpha) * s_seed_vec
+
+        delta = np.linalg.norm(s - s_prev, ord=1)
+        if delta < tolerance:
+            print(f'Converged after {iteration + 1} iterations.')
+            break
+    else:
+        print(f'Max iterations reached: {max_iterations}')
+
+    scores = {index_doc[idx]: s[idx] for idx in range(N)}
+    return scores
+
+
+def normalize_scores(scores):
+    """
+    Normalizes the scores to a range between 0 and 1.
+
+    Parameters:
+        scores (dict): Dictionary of document scores.
+
+    Returns:
+        dict: Dictionary of normalized document scores.
+    """
+    min_score = min(scores.values())
+    max_score = max(scores.values())
+    range_score = max_score - min_score
+
+    if range_score == 0:
+        # All scores are the same
+        return {k: 0.5 for k in scores}
+
+    normalized = {k: (v - min_score) / range_score for k, v in scores.items()}
+    return normalized
+
+
+if __name__ == "__main__":
+    # 根据脚本位置获取数据路径
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(current_dir, '..', 'dataset')
+
+    relations_path = os.path.join(data_dir, 'relations_latest.csv')
+    filtered_data_path = os.path.join(data_dir, 'Filtered_data.csv')
+
+    df = pd.read_csv(relations_path, usecols=['id1', 'id2', 'relation'], dtype={'id1': str, 'id2': str})
+    document_relations_df = claim_relations_to_doc_relations(df)
+
+    filtered_data_df = pd.read_csv(filtered_data_path, dtype={'id': str}, encoding='latin1')
+
+    # 获取 top 200 文档
+    doc_link_counts_1 = document_relations_df.groupby('doc_id1').size().reset_index(name='count1')
+    doc_link_counts_2 = document_relations_df.groupby('doc_id2').size().reset_index(name='count2')
+    doc_link_counts = pd.merge(doc_link_counts_1, doc_link_counts_2, left_on='doc_id1', right_on='doc_id2', how='outer')
+    doc_link_counts['doc_id'] = doc_link_counts['doc_id1'].combine_first(doc_link_counts['doc_id2'])
+    doc_link_counts['count1'] = doc_link_counts['count1'].fillna(0)
+    doc_link_counts['count2'] = doc_link_counts['count2'].fillna(0)
+    doc_link_counts['total_links'] = doc_link_counts['count1'] + doc_link_counts['count2']
+    doc_link_counts = doc_link_counts[['doc_id', 'total_links']].dropna()
+    doc_link_counts = doc_link_counts.sort_values('total_links', ascending=False)
+
+    top_docs = doc_link_counts.head(200)['doc_id'].tolist()
+
+    # ground truth
+    ground_truth_map = filtered_data_df.set_index('id')['validity'].to_dict()
+
+    # 构建可信种子和不可信种子分布
+    trust_seed = {}
+    anti_trust_seed = {}
+    for doc_id in top_docs:
+        validity = ground_truth_map.get(doc_id, None)
+        if validity == 1:
+            trust_seed[doc_id] = 1.0
+        elif validity == 0:
+            anti_trust_seed[doc_id] = 1.0
+
+    # 计算TrustRank和Anti-TrustRank分数
+    trust_scores = trustrank_core(document_relations_df, s_seed=trust_seed, alpha=0.5)
+    anti_trust_scores = trustrank_core(document_relations_df, s_seed=anti_trust_seed, alpha=0.5)
+
+    # 计算最终分数
+    final_scores = {}
+    all_docs = set(trust_scores.keys()).union(set(anti_trust_scores.keys()))
+    for d_id in all_docs:
+        t_score = trust_scores.get(d_id, 0.0)
+        a_score = anti_trust_scores.get(d_id, 0.0)
+        final_scores[d_id] = t_score - a_score
+
+    # 可选放大，以便更直观观察区分度
+    scale_factor = 1000
+    scaled_final_scores = {d_id: score * scale_factor for d_id, score in final_scores.items()}
+
+    # 输出原始放大分数
+    # print(f"Total documents scored: {len(scaled_final_scores)}")
+    # for doc_id, score in sorted(scaled_final_scores.items(), key=lambda x: x[0]):
+    #     print(f"Document {doc_id} 's score: {score:.4f}")
+
+    # 添加归一化步骤
+    normalized_final_scores = normalize_scores(scaled_final_scores)
+
+    # 输出归一化分数
+    print("\nNormalized Scores:")
+    for doc_id, score in sorted(normalized_final_scores.items(), key=lambda x: x[0]):
+        print(f"Document {doc_id} 's normalized score: {score:.4f}")
+
+    # 保存结果到CSV文件
+    results_df = pd.DataFrame({
+        'doc_id': sorted(all_docs),
+        'scaled_score': [scaled_final_scores.get(doc_id, 0.0) for doc_id in sorted(all_docs)],
+        'normalized_score': [normalized_final_scores.get(doc_id, 0.0) for doc_id in sorted(all_docs)]
+    })
+
+    output_csv_path = os.path.join(current_dir, 'final_document_scores.csv')
+    results_df.to_csv(output_csv_path, index=False, encoding='utf-8')
+    print(f"\nFinal scores have been saved to {output_csv_path}")
+
+```
+
+Contents of rank/final_document_scores.csv:
+```
+doc_id,scaled_score,normalized_score
+0000,3.8759689778089523,1.0
+0001,3.8759689778089523,1.0
+0002,3.100775182247162,0.9657043723649008
+0003,3.8759689778089523,1.0
+...
