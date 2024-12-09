@@ -10,7 +10,7 @@ FILTERED_DATA_PATH = os.path.join(DATA_DIR, 'Filtered_data.csv')
 VECTOR_INDEX_PATH = os.path.join(DATA_DIR, 'vector.index')
 
 # Parameters
-dimensions = 512  # According to the previous code
+dimensions = 1024  # According to the previous code
 model_name = "mixedbread-ai/mxbai-embed-large-v1"
 
 
@@ -22,7 +22,7 @@ def main():
     documents = df['text'].tolist()
 
     # Load model
-    model = SentenceTransformer(model_name, device='cpu')
+    model = SentenceTransformer(model_name, device='cuda')
     print(f"Model loaded: {model_name}")
 
     # Compute embeddings
