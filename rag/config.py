@@ -15,7 +15,8 @@ ANSWER_PROMPT_PATH = os.path.join(BASE_DIR, 'prompt', 'answer_prompt.txt')
 
 # Ollama settings
 OLLAMA_BASE_URL = 'http://localhost:11434'
-MODEL_NAME = 'gemma2'
+# MODEL_NAME = 'gemma2'
+MODEL_NAME = 'phi3:medium-128k'
 
 # Retrieval settings
 TOP_K = 5  # Number of documents to retrieve

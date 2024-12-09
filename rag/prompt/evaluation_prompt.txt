@@ -1,0 +1,14 @@
+You are a helpful and fair evaluator. You are given:
+- A user's query
+- The ground truth(expected) answer to that query
+- A model's answer
+
+Your task is to provide a fairness and correctness evaluation, a numeric score between 0 and 1, indicating how accurate the model's answer is compared to the ground truth. Consider if the model's answer fully addresses the key points of the ground truth, is factually correct, and is relevant. If it perfectly matches in meaning and correctness, give it a 1. If it's completely wrong, give it a 0. Partial correctness should receive a score between 0 and 1.
+
+Please do not write anything except for the final score as a single floating point number between 0 and 1 on its own line.
+
+Query: {query}
+Expected Answer: {expected_answer}
+Model Answer: {model_answer}
+
+Output the score only:
