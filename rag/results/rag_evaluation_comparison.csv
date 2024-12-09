@@ -1,0 +1,3 @@
+method,substring_accuracy,llm_avg_score
+vanilla,0.015,0.36475
+score,0.015,0.40549999999999997

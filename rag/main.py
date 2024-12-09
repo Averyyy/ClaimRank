@@ -1,9 +1,7 @@
 import argparse
 import sys
-import os
-import pandas as pd
-import numpy as np
 from sentence_transformers import SentenceTransformer
+import torch
 
 from .retriever import Retriever
 from .ranker import Ranker
@@ -22,9 +20,10 @@ def main():
     parser.add_argument("--llm_evaluate", action="store_true", help="Use LLM to evaluate answers and produce a score")
     parser.add_argument("--query", type=str, default=None, help="Run a single query in specified mode")
     args = parser.parse_args()
-
+    device = 'cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu')
+    print(f"Using device: {device}")
     # Load embeddings model
-    embedding_model = SentenceTransformer("mixedbread-ai/mxbai-embed-large-v1", device='cpu', truncate_dim=1024)
+    embedding_model = SentenceTransformer("mixedbread-ai/mxbai-embed-large-v1", device=device, truncate_dim=1024)
 
     retriever = Retriever()
     ranker = Ranker()

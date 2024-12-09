@@ -49,6 +49,9 @@ def evaluate_system_with_llm(evaluation_llm_client, df_results):
     # LLM-based evaluation to compute a score between 0 and 1 for each response
     # We'll read from df_results that already has the model answer and expected answer.
     evaluation_prompt_template = load_prompt_template('./rag/prompt/evaluation_prompt.txt')
+    print(
+        "Evaluating model answers using LLM-based scoring. This may take a while depending on the number of queries."
+    )
 
     llm_scores = []
     for idx, row in tqdm(df_results.iterrows(), total=len(df_results)):
@@ -65,11 +68,12 @@ def evaluate_system_with_llm(evaluation_llm_client, df_results):
 
         # Try to parse the response as a float
         try:
+            print(eval_response)
             score = float(eval_response.strip())
             if score < 0 or score > 1:
                 score = 0.0
         except:
-            score = 0.0
+            score = 0.5
 
         llm_scores.append(score)
 
