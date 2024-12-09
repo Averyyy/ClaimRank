@@ -1,7 +1,7 @@
 import pandas as pd
 import math
 from typing import List, Dict
-from .config import DOC_SCORES_PATH
+from rag.config import DOC_SCORES_PATH
 
 
 class Ranker:

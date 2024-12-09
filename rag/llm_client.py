@@ -1,6 +1,6 @@
 import requests
 import logging
-from .config import OLLAMA_BASE_URL, MODEL_NAME
+from rag.config import OLLAMA_BASE_URL, MODEL_NAME
 
 
 class LLMClient:

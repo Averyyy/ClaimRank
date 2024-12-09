@@ -1,7 +1,7 @@
 import faiss
 import numpy as np
 import pandas as pd
-from .config import VECTOR_INDEX_PATH, FILTERED_DATA_PATH, TOP_K
+from rag.config import VECTOR_INDEX_PATH, FILTERED_DATA_PATH, TOP_K
 
 
 class Retriever:

@@ -6,12 +6,12 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 # Local imports
-from .retriever import Retriever
-from .ranker import Ranker
-from .llm_client import LLMClient
-from .config import MODEL_NAME, FILTERED_DATA_PATH
-from .evaluator import compare_modes, evaluate_system
-from .utils import load_prompt_template, format_documents
+from rag.retriever import Retriever
+from rag.ranker import Ranker
+from rag.llm_client import LLMClient
+from rag.config import MODEL_NAME, FILTERED_DATA_PATH
+from rag.evaluator import compare_modes, evaluate_system
+from rag.utils import load_prompt_template, format_documents
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
 
     # Load embeddings model for queries
     # Adjust model as needed. The user used "mixedbread-ai/mxbai-embed-large-v1" previously.
-    embedding_model = SentenceTransformer("mixedbread-ai/mxbai-embed-large-v1", device='cpu', truncate_dim=512)
+    embedding_model = SentenceTransformer("mixedbread-ai/mxbai-embed-large-v1", device='cpu', truncate_dim=1024)
 
     retriever = Retriever()
     ranker = Ranker()

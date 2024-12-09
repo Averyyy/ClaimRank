@@ -1,7 +1,7 @@
 import pandas as pd
 from tqdm import tqdm
-from .config import TEST_QUERIES_PATH, TEST_ANSWERS_PATH
-from .utils import load_prompt_template, format_documents
+from rag.config import TEST_QUERIES_PATH, TEST_ANSWERS_PATH
+from rag.utils import load_prompt_template, format_documents
 
 # Simple evaluation metric: exact match or substring check in answer
 # You can improve metrics as needed.
